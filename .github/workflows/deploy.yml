@@ -1,0 +1,63 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # ← allows manual trigger from GitHub Actions tab
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # full history — sometimes needed for correct git info
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22      # or keep '20' if you prefer
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Cache node modules (client)
+        uses: actions/cache@v4
+        id: cache-client
+        with:
+          path: client/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+
+      - name: Install client dependencies
+        working-directory: ./client
+        run: npm ci
+        if: steps.cache-client.outputs.cache-hit != 'true'   # skip if cache hit
+
+      - name: Build client (Vite)
+        working-directory: ./client
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}   # optional: inject git commit hash
+
+      - name: Fix SPA routing for GitHub Pages
+        run: cp client/dist/index.html client/dist/404.html
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./client/dist
+          publish_branch: gh-pages
+          clean: true                     # ← removes old files from previous deploys
+          keep_files: false
+          # cname: yourdomain.lk          # ← uncomment & set if using custom domain
+          # force_orphan: true            # ← optional: start fresh history each time
+
+      # - name: Output deployment URL
+      #   run: echo "GitHub Pages URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"

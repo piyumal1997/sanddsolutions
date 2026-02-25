@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@keyframes horizontal-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-60%); } /* -50% for duplicated list loop */
+}
+
+.animate-horizontal-scroll {
+  animation: horizontal-scroll 15s linear infinite; /* 30s speed – adjust for slower/faster */
+}
+
+.animate-horizontal-scroll:hover {
+  animation-play-state: paused; /* Optional: Pause on hover */
+}

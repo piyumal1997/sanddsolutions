@@ -1,0 +1,78 @@
+# ════════════════════════════════════════════════════════════════════════
+# Logs & temporary files (both sides)
+# ════════════════════════════════════════════════════════════════════════
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ════════════════════════════════════════════════════════════════════════
+# Dependency directories
+# ════════════════════════════════════════════════════════════════════════
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# ════════════════════════════════════════════════════════════════════════
+# Frontend build artifacts (Vite / React)
+# ════════════════════════════════════════════════════════════════════════
+client/dist/
+client/dist-ssr/
+client/.vite/
+client/.svelte-kit/     # in case you ever experiment with Svelte
+
+# ════════════════════════════════════════════════════════════════════════
+# Backend build / runtime artifacts
+# ════════════════════════════════════════════════════════════════════════
+server/dist/
+server/build/
+server/uploads/         # ← uploaded files from multer (very important!)
+server/coverage/
+
+# ════════════════════════════════════════════════════════════════════════
+# Environment & secrets (never commit real ones)
+# ════════════════════════════════════════════════════════════════════════
+.env
+.env.local
+.env.*.local
+client/.env
+client/.env.local
+server/.env
+server/.env.local
+
+# ════════════════════════════════════════════════════════════════════════
+# Editor / OS files
+# ════════════════════════════════════════════════════════════════════════
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ════════════════════════════════════════════════════════════════════════
+# Testing & coverage
+# ════════════════════════════════════════════════════════════════════════
+coverage/
+*.lcov
+
+# ════════════════════════════════════════════════════════════════════════
+# Temporary / misc
+# ════════════════════════════════════════════════════════════════════════
+*.local
+*.tmp
+*.bak
+*.swp
+Thumbs.db
+
+# ════════════════════════════════════════════════════════════════════════
+# Optional: lockfiles – usually keep them, but you can ignore if you want
+# package-lock.json    # ← uncomment if you prefer no lockfile in repo
+# yarn.lock
+# pnpm-lock.yaml
