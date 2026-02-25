@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow private or unnecessary paths (add more if you have admin/dashboard routes)
+Disallow: /private/
+Disallow: /admin/
+
+# Point to your sitemap
+Sitemap: https://www.sanddsolutions.lk/sitemap.xml
