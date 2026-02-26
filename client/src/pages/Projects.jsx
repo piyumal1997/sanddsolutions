@@ -1,76 +1,88 @@
 // src/pages/Projects.jsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ProjectCard from '../components/ui/ProjectCard';
 import ProjectModal from '../components/ui/ProjectModal';
-import { supabase } from '../supabase';
 
-import projectsBg from '../assets/images/background/projects-bg.jpg'; // Your background image
+import projectsBg from '../assets/images/background/projects-bg.jpg';
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
-  const [filteredProjects, setFilteredProjects] = useState([]); // ← This line was missing
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const projectsPerPage = 6;
 
-  // Fetch projects from Supabase
+  // Fetch filtered projects from backend
   useEffect(() => {
     const fetchProjects = async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('date', { ascending: false });
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-      } else {
+        let url = '/api/projects';
+        const params = new URLSearchParams();
+
+        if (typeFilter !== 'all') {
+          params.append('type', typeFilter);
+        }
+
+        if (search.trim()) {
+          params.append('search', search.trim());
+        }
+
+        if (params.toString()) {
+          url += `?${params.toString()}`;
+        }
+
+        const apiUrl = import.meta.env.VITE_API_BASE_URL
+          ? `${import.meta.env.VITE_API_BASE_URL}${url}`
+          : url;
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) {
+          throw new Error(`Failed to load projects: ${response.status}`);
+        }
+
+        const data = await response.json();
         setProjects(data || []);
-        setFilteredProjects(data || []); // Initialize filtered state
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+        setError(err.message || 'Could not load projects. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProjects();
-  }, []);
+  }, [search, typeFilter]); // Re-fetch when filters change
 
-  // Apply filters whenever search or type changes
-  useEffect(() => {
-    let filtered = projects;
-
-    // Search filter
-    if (search.trim()) {
-      const lowerSearch = search.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.title.toLowerCase().includes(lowerSearch) ||
-          p.description.toLowerCase().includes(lowerSearch)
-      );
-    }
-
-    // Type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter((p) => p.type === typeFilter);
-    }
-
-    setFilteredProjects(filtered);
-    setCurrentPage(1); // Reset to page 1 on filter change
-  }, [search, typeFilter, projects]);
-
-  // Pagination logic
+  // Pagination (now on backend-filtered results)
+  const totalPages = Math.ceil(projects.length / projectsPerPage);
   const indexOfLast = currentPage * projectsPerPage;
   const indexOfFirst = indexOfLast - projectsPerPage;
-  const currentProjects = filteredProjects.slice(indexOfFirst, indexOfLast);
+  const currentProjects = projects.slice(indexOfFirst, indexOfLast);
 
-  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter]);
+
+  // ────────────────────────────────────────────────
+  // Render
+  // ────────────────────────────────────────────────
 
   return (
     <main className="pt-0 bg-white">
-      {/* Hero Section – Same as SolarEnergy.jsx */}
+      {/* Hero Section – unchanged */}
       <section className="relative h-96 pt-0">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-fixed" 
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-fixed"
           style={{ backgroundImage: `url(${projectsBg})` }}
         ></div>
         <div className="absolute inset-0 bg-black/50"></div>
@@ -86,12 +98,11 @@ const Projects = () => {
         </div>
       </section>
 
-      {/* Filters Section */}
+      {/* Filters Section – unchanged */}
       <section className="py-12 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-8">
-              {/* Search */}
               <div className="w-full md:flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input
@@ -103,7 +114,6 @@ const Projects = () => {
                 />
               </div>
 
-              {/* Type Filter */}
               <div className="w-full md:w-64">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
                 <select
@@ -123,10 +133,25 @@ const Projects = () => {
         </div>
       </section>
 
-      {/* Projects Grid */}
+      {/* Projects Grid / Loading / Error */}
       <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          {filteredProjects.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-green-600 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600">Loading projects...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-20 text-red-600">
+              <p className="text-xl font-medium">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : projects.length === 0 ? (
             <p className="text-center text-xl text-gray-600 py-12">
               No projects match your criteria.
             </p>
@@ -148,8 +173,7 @@ const Projects = () => {
                   <button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-6 md:px-8 py-3 md:py-4 bg-green-600 text-white rounded-lg font-medium 
-                             disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition"
+                    className="px-6 md:px-8 py-3 md:py-4 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition"
                   >
                     Previous
                   </button>
@@ -159,8 +183,7 @@ const Projects = () => {
                   <button
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-6 md:px-8 py-3 md:py-4 bg-green-600 text-white rounded-lg font-medium 
-                             disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition"
+                    className="px-6 md:px-8 py-3 md:py-4 bg-green-600 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition"
                   >
                     Next
                   </button>
@@ -171,7 +194,7 @@ const Projects = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA – unchanged */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
@@ -189,7 +212,7 @@ const Projects = () => {
         </div>
       </section>
 
-      {/* Modal */}
+      {/* Modal – unchanged */}
       {selectedProject && (
         <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
       )}

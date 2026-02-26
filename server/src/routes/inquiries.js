@@ -56,17 +56,26 @@ router.post('/', async (req, res) => {
 
     // Admin notification
     await transporter.sendMail({
-      from: `"S&D Website" <noreply@sanddsolutions.lk>`,
+      from: {
+        name: `${name} via S&D Website`,           // shows as: "Piyumal via S&D Website"
+        address: 'noreply@sanddsolutions.lk'       // must be your verified email
+      },
+      replyTo: email,                              // ← this is the key line
       to: 'info@sanddsolutions.lk',
       subject: `New Inquiry: ${name} - ${inquiry_type}`,
       html: `
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
         <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
         <p><strong>Type:</strong> ${inquiry_type}</p>
         <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
         <p><small>reCAPTCHA score: ${verifyData.score || 'N/A'}</small></p>
+        <hr>
+        <p style="color:#666; font-size:0.9em;">
+          This message was sent from the website contact form.<br>
+          Reply directly to reach the sender.
+        </p>
       `,
     });
 
