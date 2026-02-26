@@ -31,8 +31,10 @@ app.use('/api/inquiries', inquiryRoutes);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
+  // Serve static React build
   app.use(express.static(path.join(__dirname, '../../client/dist')));
 
+  // Catch-all for SPA routing
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
   });
