@@ -139,6 +139,9 @@ const ContactInner = () => {
         ? `${import.meta.env.VITE_API_BASE_URL}/api/inquiries`
         : "/api/inquiries";
 
+        // Log it to console so you can see exactly what is being requested
+      console.log('Sending to:', apiUrl);
+
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
