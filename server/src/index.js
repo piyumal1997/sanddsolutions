@@ -15,6 +15,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Temporary global test route – add at the TOP
+app.get('/api/test-alive', (req, res) => {
+  res.json({
+    status: 'API is alive!',
+    path: req.originalUrl,
+    time: new Date().toISOString(),
+    env: process.env.NODE_ENV
+  });
+});
+
 
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true })); // adjust for production
@@ -28,6 +38,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/inquiries', inquiryRoutes);
+
+
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

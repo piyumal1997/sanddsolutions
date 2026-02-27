@@ -6,15 +6,15 @@ const router = express.Router();
 
 // Public route – no JWT needed (or add rate-limit later)
 router.post('/', async (req, res) => {
-  const { name, email, phone, inquiry_type, message, recaptcha_token } = req.body;
-
-  // Basic validation
-  if (!name || !email || !inquiry_type || !message || !recaptcha_token) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
   // 1. Verify reCAPTCHA
   try {
+    const { name, email, phone, inquiry_type, message, recaptcha_token } = req.body;
+
+    // Basic validation
+    if (!name || !email || !inquiry_type || !message || !recaptcha_token) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     const verifyRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -98,7 +98,7 @@ router.post('/', async (req, res) => {
     res.status(200).json({ success: true, message: 'Inquiry submitted successfully' });
   } catch (err) {
     console.error('Inquiry error:', err);
-    res.status(500).json({ error: 'Internal server error', details: err.message });
+    res.status(500).json({ success: false, error: err.message || 'Internal server error' });
   }
 });
 
