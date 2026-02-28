@@ -1,13 +1,12 @@
-// server/src/routes/auth.js (v1 - updated with Joi validation)
+// NEW FILE: server/src/routes/auth-v2.js (copy of auth.js with v2 improvements, e.g., better responses)
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-import Joi from "joi"; // NEW: For validation
+import Joi from "joi";
 
 const router = express.Router();
 
-// NEW: Validation schemas
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
@@ -18,10 +17,12 @@ const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
-// POST /api/auth/register (admin only – restrict in production!)
 router.post("/register", async (req, res) => {
-  const { error } = registerSchema.validate(req.body); // NEW: Validate
-  if (error) return res.status(400).json({ message: error.details[0].message });
+  const { error } = registerSchema.validate(req.body);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message }); // v2: Standardized response
 
   const { email, password } = req.body;
 
@@ -30,7 +31,9 @@ router.post("/register", async (req, res) => {
       email,
     ]);
     if (existing.length > 0)
-      return res.status(400).json({ message: "User already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 12);
 
@@ -39,17 +42,21 @@ router.post("/register", async (req, res) => {
       [email, hashed, "admin"],
     );
 
-    res.status(201).json({ message: "Admin registered – now login" });
+    res
+      .status(201)
+      .json({ success: true, message: "Admin registered – now login" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// POST /api/auth/login
 router.post("/login", async (req, res) => {
-  const { error } = loginSchema.validate(req.body); // NEW: Validate
-  if (error) return res.status(400).json({ message: error.details[0].message });
+  const { error } = loginSchema.validate(req.body);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
 
   const { email, password } = req.body;
 
@@ -58,11 +65,16 @@ router.post("/login", async (req, res) => {
       email,
     ]);
     if (rows.length === 0)
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+    if (!match)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
@@ -70,9 +82,9 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" },
     );
 
-    res.json({ token, user: { email: user.email } });
+    res.json({ success: true, data: { token, user: { email: user.email } } }); // v2: Wrapped in data
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

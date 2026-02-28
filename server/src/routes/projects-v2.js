@@ -1,20 +1,17 @@
-// server/src/routes/projects.js (v1 - updated with Joi validation)
+// NEW FILE: server/src/routes/projects-v2.js (copy with v2 improvements: pagination, standardized responses)
 import express from "express";
 import pool from "../config/db.js";
 import { protect } from "../middleware/authMiddleware.js";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
-import Joi from "joi"; // NEW: For validation
+import Joi from "joi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// ────────────────────────────────────────────────
-// Multer setup for file uploads
-// ────────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "../../uploads/"));
@@ -28,7 +25,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max per file
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|mp4/;
     const extname = allowedTypes.test(
@@ -44,45 +41,54 @@ const upload = multer({
   },
 });
 
-// NEW: Validation schemas
+const getSchema = Joi.object({
+  type: Joi.string().optional(),
+  search: Joi.string().optional(),
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(10),
+});
+
 const projectSchema = Joi.object({
   title: Joi.string().required(),
   description: Joi.string().optional(),
   type: Joi.string().required(),
   date: Joi.date().required(),
   details: Joi.string().optional(),
-  existingImages: Joi.string().optional(), // For PUT
+  existingImages: Joi.string().optional(),
 });
 
-// ────────────────────────────────────────────────
-// GET /api/projects
-// Public endpoint – returns all projects for frontend display
-// ────────────────────────────────────────────────
-// Supports ?type=industrial-solar & ?search=solar (both optional)
 router.get("/", async (req, res) => {
+  const { error, value } = getSchema.validate(req.query);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, error: error.details[0].message });
+
   try {
     let query =
       "SELECT id, title, description, type, date, details, images FROM projects WHERE 1=1";
     const params = [];
 
-    // Type filter
-    if (req.query.type && req.query.type !== "all") {
+    if (value.type && value.type !== "all") {
       query += " AND type = ?";
-      params.push(req.query.type);
+      params.push(value.type);
     }
 
-    // Search filter (title OR description)
-    if (req.query.search && req.query.search.trim()) {
-      const searchTerm = `%${req.query.search.trim()}%`;
+    if (value.search && value.search.trim()) {
+      const searchTerm = `%${value.search.trim()}%`;
       query += " AND (title LIKE ? OR description LIKE ?)";
       params.push(searchTerm, searchTerm);
     }
 
-    query += " ORDER BY date DESC";
+    query += " ORDER BY date DESC LIMIT ? OFFSET ?";
+    params.push(value.limit, (value.page - 1) * value.limit);
 
     const [rows] = await pool.query(query, params);
 
-    // Optional: convert image paths to absolute URLs
+    const [[{ total }]] = await pool.query(
+      "SELECT COUNT(*) as total FROM projects",
+    ); // For meta
+
     const baseUrl =
       process.env.NODE_ENV === "production"
         ? "https://sanddsolutions.lk"
@@ -97,62 +103,70 @@ router.get("/", async (req, res) => {
         : [],
     }));
 
-    res.json(projects);
+    res.json({
+      success: true,
+      data: projects,
+      meta: { total, page: value.page, limit: value.limit },
+    });
   } catch (err) {
     console.error("Error fetching projects:", err);
-    res.status(500).json({ message: "Server error while fetching projects" });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Server error while fetching projects",
+      });
   }
 });
 
-// ────────────────────────────────────────────────
-// All routes below this are protected (admin only)
-// ────────────────────────────────────────────────
 router.use(protect);
 
-// POST /api/projects – Create new project (admin)
-router.post(
-  "/",
-  upload.array("images", 10), // max 10 files
-  async (req, res) => {
-    const { error } = projectSchema.validate(req.body); // NEW: Validate
-    if (error)
-      return res.status(400).json({ message: error.details[0].message });
+router.post("/", upload.array("images", 10), async (req, res) => {
+  const { error } = projectSchema.validate(req.body);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
 
-    try {
-      const { title, description, type, date, details } = req.body;
+  try {
+    const { title, description, type, date, details } = req.body;
 
-      const files = req.files || [];
-      const imagePaths = files.map((file) => `/uploads/${file.filename}`);
+    const files = req.files || [];
+    const imagePaths = files.map((file) => `/uploads/${file.filename}`);
 
-      const [result] = await pool.query(
-        `INSERT INTO projects 
+    const [result] = await pool.query(
+      `INSERT INTO projects 
          (title, description, type, date, details, images, created_at) 
          VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-        [
-          title.trim(),
-          description?.trim() || null,
-          type,
-          date,
-          details?.trim() || null,
-          JSON.stringify(imagePaths),
-        ],
-      );
+      [
+        title.trim(),
+        description?.trim() || null,
+        type,
+        date,
+        details?.trim() || null,
+        JSON.stringify(imagePaths),
+      ],
+    );
 
-      res.status(201).json({
-        id: result.insertId,
-        message: "Project created successfully",
-      });
-    } catch (err) {
-      console.error("Create project error:", err);
-      res.status(500).json({ message: "Failed to create project" });
-    }
-  },
-);
+    res.status(201).json({
+      success: true,
+      data: { id: result.insertId },
+      message: "Project created successfully",
+    });
+  } catch (err) {
+    console.error("Create project error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to create project" });
+  }
+});
 
-// PUT /api/projects/:id – Update existing project (admin)
 router.put("/:id", upload.array("images", 10), async (req, res) => {
-  const { error } = projectSchema.validate(req.body); // NEW: Validate
-  if (error) return res.status(400).json({ message: error.details[0].message });
+  const { error } = projectSchema.validate(req.body);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
 
   try {
     const { id } = req.params;
@@ -166,7 +180,7 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
       } catch (e) {
         return res
           .status(400)
-          .json({ message: "Invalid existingImages format" });
+          .json({ success: false, message: "Invalid existingImages format" });
       }
     }
 
@@ -190,17 +204,20 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Project not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
     }
 
-    res.json({ message: "Project updated successfully" });
+    res.json({ success: true, message: "Project updated successfully" });
   } catch (err) {
     console.error("Update project error:", err);
-    res.status(500).json({ message: "Failed to update project" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update project" });
   }
 });
 
-// DELETE /api/projects/:id – Delete project (admin)
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -210,13 +227,17 @@ router.delete("/:id", async (req, res) => {
     ]);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Project not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
     }
 
-    res.json({ message: "Project deleted successfully" });
+    res.json({ success: true, message: "Project deleted successfully" });
   } catch (err) {
     console.error("Delete project error:", err);
-    res.status(500).json({ message: "Failed to delete project" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete project" });
   }
 });
 

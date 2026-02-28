@@ -1,12 +1,11 @@
-// server/src/routes/inquiries.js (v1 - updated with Joi validation)
+// NEW FILE: server/src/routes/inquiries-v2.js (copy with v2 improvements, e.g., standardized responses)
 import express from "express";
 import nodemailer from "nodemailer";
 import pool from "../config/db.js";
-import Joi from "joi"; // NEW: For validation
+import Joi from "joi";
 
 const router = express.Router();
 
-// NEW: Validation schema
 const inquirySchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
@@ -16,10 +15,12 @@ const inquirySchema = Joi.object({
   recaptcha_token: Joi.string().required(),
 });
 
-// Public route – no JWT needed (or add rate-limit later)
 router.post("/", async (req, res) => {
-  const { error } = inquirySchema.validate(req.body); // NEW: Validate
-  if (error) return res.status(400).json({ error: error.details[0].message });
+  const { error } = inquirySchema.validate(req.body);
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, error: error.details[0].message });
 
   try {
     const { name, email, phone, inquiry_type, message, recaptcha_token } =
@@ -38,12 +39,12 @@ router.post("/", async (req, res) => {
 
     if (!verifyData.success || verifyData.score < 0.3) {
       return res.status(400).json({
+        success: false,
         error: "reCAPTCHA verification failed",
         details: verifyData,
       });
     }
 
-    // 2. Save to MySQL (create table `inquiries` if not exists)
     await pool.query(
       `INSERT INTO inquiries (name, email, phone, inquiry_type, message, recaptcha_score, created_at)
        VALUES (?, ?, ?, ?, ?, ?, NOW())`,
@@ -57,30 +58,22 @@ router.post("/", async (req, res) => {
       ],
     );
 
-    // 3. Send emails via your domain SMTP
     const transporter = nodemailer.createTransport({
-      host: "mail.sanddsolutions.lk", // ← confirm exact hostname in cPanel Email → Connect Devices
-      port: 465, // 465 = SSL, 587 = STARTTLS (try both)
-      secure: true, // true for 465, false for 587
+      host: "mail.sanddsolutions.lk",
+      port: 465,
+      secure: true,
       auth: {
-        user: "noreply@sanddsolutions.lk", // create this email in cPanel if not exists
-        pass: process.env.EMAIL_PASSWORD, // add to cPanel env vars
+        user: "noreply@sanddsolutions.lk",
+        pass: process.env.EMAIL_PASSWORD,
       },
-      // Optional: debug + logger in dev
-      // debug: process.env.NODE_ENV !== 'production',
-      // logger: true,
     });
 
-    // Test connection (optional – remove in production)
-    // await transporter.verify();
-
-    // Admin notification
     await transporter.sendMail({
       from: {
-        name: `${name} via S&D Website`, // shows as: "Piyumal via S&D Website"
-        address: "noreply@sanddsolutions.lk", // must be your verified email
+        name: `${name} via S&D Website`,
+        address: "noreply@sanddsolutions.lk",
       },
-      replyTo: email, // ← this is the key line
+      replyTo: email,
       to: "info@sanddsolutions.lk",
       subject: `New Inquiry: ${name} - ${inquiry_type}`,
       html: `
@@ -99,7 +92,6 @@ router.post("/", async (req, res) => {
       `,
     });
 
-    // Auto-reply to user
     await transporter.sendMail({
       from: `"S&D Solutions" <noreply@sanddsolutions.lk>`,
       to: email,
