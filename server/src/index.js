@@ -28,11 +28,12 @@ app.use(cors({
   origin: [
     'https://sanddsolutions.lk',
     'https://www.sanddsolutions.lk',
-    // Keep localhost for local dev
-    'http://localhost:5173', 
-    'http://localhost:3000',
+    'http://localhost:5173',     
+    'http://localhost:3000',     
   ],
-  credentials: true,       
+  credentials: true,             
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // To confirm if requests even reach the app
