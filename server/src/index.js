@@ -24,6 +24,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// To confirm if requests even reach the app
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} from ${req.ip}`);
+  next();
+});
+
 // NEW: Logging middleware (add before routes)
 app.use(morgan("combined")); // Or 'dev' for development
 
