@@ -5,8 +5,8 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import rateLimit from "express-rate-limit"; // NEW: For rate limiting
-import morgan from "morgan"; // NEW: For logging (optional but recommended)
+import rateLimit from "express-rate-limit"; 
+import morgan from "morgan"; 
 
 import authRoutes from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
@@ -42,7 +42,7 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter); // Apply to all /api routes
 
-// Temporary global test route – add at the TOP
+// Temporary global test route 
 app.get("/api/test-alive", (req, res) => {
   res.json({
     status: "API is alive!",
