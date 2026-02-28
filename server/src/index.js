@@ -24,6 +24,17 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.use(cors({
+  origin: [
+    'https://sanddsolutions.lk',
+    'https://www.sanddsolutions.lk',
+    // Keep localhost for local dev
+    'http://localhost:5173', 
+    'http://localhost:3000',
+  ],
+  credentials: true,       
+}));
+
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} from ${req.ip}`);
