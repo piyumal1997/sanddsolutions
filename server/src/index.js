@@ -24,16 +24,35 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+//CORS configuration - tightened for production, open for development
+// app.use(cors({
+//   origin: [
+//     'https://sanddsolutions.lk',
+//     'https://www.sanddsolutions.lk',
+//     'http://localhost:5173',     
+//     'http://localhost:3000',     
+//   ],
+//   credentials: true,             
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// }));
+
 app.use(cors({
-  origin: [
-    'https://sanddsolutions.lk',
-    'https://www.sanddsolutions.lk',
-    'http://localhost:5173',     
-    'http://localhost:3000',     
-  ],
-  credentials: true,             
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    const allowed = [
+      'https://sanddsolutions.lk',
+      'https://www.sanddsolutions.lk',
+    ];
+
+    if (allowed.includes(origin) || origin.startsWith('http://localhost')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
 // To confirm if requests even reach the app
