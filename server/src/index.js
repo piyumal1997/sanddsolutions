@@ -5,8 +5,8 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import rateLimit from "express-rate-limit"; 
-import morgan from "morgan"; 
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 
 import authRoutes from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
@@ -25,22 +25,40 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 //CORS configuration - tightened for production, open for development
-app.use(cors({
-  origin: [
-    'https://sanddsolutions.lk',
-    'https://www.sanddsolutions.lk',
-    'http://localhost:5173',     
-    'http://localhost:3000',     
-  ],
-  credentials: true,             
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// app.use(
+//   cors({
+//     origin: [
+//       "https://sanddsolutions.lk",
+//       "https://www.sanddsolutions.lk",
+//       "http://localhost:5173",
+//       "http://localhost:3000",
+//     ],
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   }),
+// );
 
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [
+            "https://sanddsolutions.lk",
+            "https://www.sanddsolutions.lk",
+            "http://localhost:5173",
+            "http://localhost:3000",
+          ]
+        : true,
+    credentials: true,
+  }),
+); // Tightened for prod
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} from ${req.ip}`);
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} from ${req.ip}`,
+  );
   next();
 });
 
@@ -56,7 +74,7 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter); // Apply to all /api routes
 
-// Temporary global test route 
+// Temporary global test route
 app.get("/api/test-alive", (req, res) => {
   res.json({
     status: "API is alive!",
@@ -67,15 +85,7 @@ app.get("/api/test-alive", (req, res) => {
 });
 
 app.use(helmet());
-// app.use(
-//   cors({
-//     origin:
-//       process.env.NODE_ENV === "production"
-//         ? "https://sanddsolutions.lk"
-//         : true,
-//     credentials: true,
-//   }),
-// ); // Tightened for prod
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
