@@ -18,49 +18,57 @@ const Projects = () => {
   const projectsPerPage = 6;
 
   // Fetch filtered projects from backend
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        let url = '/api/projects';
-        const params = new URLSearchParams();
+      let url = '/api/projects';
+      const params = new URLSearchParams();
 
-        if (typeFilter !== 'all') {
-          params.append('type', typeFilter);
-        }
-
-        if (search.trim()) {
-          params.append('search', search.trim());
-        }
-
-        if (params.toString()) {
-          url += `?${params.toString()}`;
-        }
-
-        const apiUrl = import.meta.env.VITE_API_BASE_URL
-          ? `${import.meta.env.VITE_API_BASE_URL}${url}`
-          : url;
-
-        const response = await fetch(apiUrl);
-
-        if (!response.ok) {
-          throw new Error(`Failed to load projects: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setProjects(data || []);
-      } catch (err) {
-        console.error('Error fetching projects:', err);
-        setError(err.message || 'Could not load projects. Please try again later.');
-      } finally {
-        setLoading(false);
+      if (typeFilter !== 'all') {
+        params.append('type', typeFilter);
       }
-    };
 
-    fetchProjects();
-  }, [search, typeFilter]); // Re-fetch when filters change
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const apiUrl = import.meta.env.VITE_API_BASE_URL
+        ? `${import.meta.env.VITE_API_BASE_URL}${url}`
+        : url;
+
+      const response = await fetch(apiUrl);
+
+      if (!response.ok) {
+        throw new Error(`Failed to load projects: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // FIXED: Extract the actual array from { success, data }
+      const projectArray = data.success && Array.isArray(data.data)
+        ? data.data
+        : Array.isArray(data)
+        ? data
+        : [];
+
+      setProjects(projectArray);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError(err.message || 'Could not load projects. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchProjects();
+}, [search, typeFilter]); // Re-fetch when filters change
 
   // Pagination (now on backend-filtered results)
   const totalPages = Math.ceil(projects.length / projectsPerPage);
