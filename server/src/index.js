@@ -13,6 +13,11 @@ import projectRoutes from "./routes/projects.js";
 import inquiryRoutes from "./routes/inquiries.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notifications.js";
+import packageRoutes from './routes/packages.js';
+import panelBrandRoutes from './routes/panel-brands.js';
+import panelCapacityRoutes from './routes/panel-capacities.js';
+import inverterBrandRoutes from './routes/inverter-brands.js';
+import inverterCapacityRoutes from './routes/inverter-capacities.js';
 
 // NEW: v2 routes
 import authRoutesV2 from "./routes/auth-v2.js";
@@ -100,6 +105,11 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/inquiries", inquiryRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use('/api/packages', packageRoutes);
+app.use('/api/panel-brands', panelBrandRoutes);
+app.use('/api/panel-capacities', panelCapacityRoutes);
+app.use('/api/inverter-brands', inverterBrandRoutes);
+app.use('/api/inverter-capacities', inverterCapacityRoutes);
 
 // NEW: API v2 routes
 app.use("/api/v2/auth", authRoutesV2);
