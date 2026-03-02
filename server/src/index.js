@@ -19,11 +19,6 @@ import panelCapacityRoutes from './routes/panel-capacities.js';
 import inverterBrandRoutes from './routes/inverter-brands.js';
 import inverterCapacityRoutes from './routes/inverter-capacities.js';
 
-// NEW: v2 routes
-import authRoutesV2 from "./routes/auth-v2.js";
-import projectRoutesV2 from "./routes/projects-v2.js";
-import inquiryRoutesV2 from "./routes/inquiries-v2.js";
-
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,21 +40,6 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-
-// app.use(
-//   cors({
-//     origin:
-//       process.env.NODE_ENV === "production"
-//         ? [
-//             "https://sanddsolutions.lk",
-//             "https://www.sanddsolutions.lk",
-//             "http://localhost:5173",
-//             "http://localhost:3000",
-//           ]
-//         : true,
-//     credentials: true,
-//   }),
-// ); // Tightened for prod
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
@@ -111,10 +91,6 @@ app.use('/api/panel-capacities', panelCapacityRoutes);
 app.use('/api/inverter-brands', inverterBrandRoutes);
 app.use('/api/inverter-capacities', inverterCapacityRoutes);
 
-// NEW: API v2 routes
-app.use("/api/v2/auth", authRoutesV2);
-app.use("/api/v2/projects", projectRoutesV2);
-app.use("/api/v2/inquiries", inquiryRoutesV2);
 
 // Serve React frontend in production (updated to serve from 'public' subdir)
 if (process.env.NODE_ENV === "production") {
