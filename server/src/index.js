@@ -11,6 +11,8 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
 import inquiryRoutes from "./routes/inquiries.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notifications.js";
 
 // NEW: v2 routes
 import authRoutesV2 from "./routes/auth-v2.js";
@@ -96,6 +98,8 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/inquiries", inquiryRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // NEW: API v2 routes
 app.use("/api/v2/auth", authRoutesV2);
