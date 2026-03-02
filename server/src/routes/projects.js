@@ -3,8 +3,8 @@ import express from "express";
 import pool from "../config/db.js";
 import { protect, restrictTo } from "../middleware/authMiddleware.js";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import Joi from "joi";
 
 const __filename = fileURLToPath(import.meta.url);
