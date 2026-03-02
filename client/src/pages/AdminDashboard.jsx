@@ -146,48 +146,57 @@ const AdminDashboard = () => {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    const endpoint = isRegistering ? "register" : "login";
+    const endpoint = isRegistering ? 'register' : 'login';
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${API_BASE}/api/auth/${endpoint}`, {  // or /api/v2/auth/${endpoint}
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data.message ||
-            (isRegistering ? "Registration failed" : "Login failed"),
-        );
+        throw new Error(data.message || (isRegistering ? 'Registration failed' : 'Login failed'));
       }
 
       if (isRegistering) {
         Swal.fire({
-          icon: "success",
-          title: "Registered!",
-          text: "You can now log in.",
+          icon: 'success',
+          title: 'Registered!',
+          text: 'You can now log in.',
           timer: 2000,
         });
         setIsRegistering(false);
       } else {
-        localStorage.setItem("adminToken", data.token);
-        setToken(data.token);
-        setUser({ email: data.user.email, role: data.user.role });
+        // Handle both possible response shapes (old flat + new {data: {token, user}})
+        const token = data.token || data.data?.token;
+        const userData = data.user || data.data?.user;
+
+        if (!token || !userData) {
+          throw new Error("Invalid login response from server");
+        }
+
+        localStorage.setItem('adminToken', token);
+        setToken(token);
+        setUser({
+          email: userData.email,
+          role: userData.role,
+        });
+
         Swal.fire({
-          icon: "success",
-          title: "Welcome!",
-          text: `Logged in as ${data.user.role}`,
+          icon: 'success',
+          title: 'Welcome!',
+          text: `Logged in as ${userData.role}`,
           timer: 1800,
         });
       }
     } catch (err) {
       Swal.fire({
-        icon: "error",
-        title: "Authentication Failed",
-        text: err.message,
+        icon: 'error',
+        title: 'Authentication Failed',
+        text: err.message || 'Something went wrong. Please try again.',
       });
     }
   };
