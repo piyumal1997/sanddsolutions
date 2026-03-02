@@ -4,8 +4,10 @@ import {
   RouterProvider,
   Outlet,
   ScrollRestoration,
+  useLocation,
+  Navigate,
 } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import LoadingSpinner from "./components/common/LoadingSpinner";
@@ -15,12 +17,8 @@ import {
   isAuthenticated,
   setupActivityListeners,
   resetInactivityTimer,
-  protectedFetch,
-  getCurrentUser,
-  logout,
 } from "./utils/auth";
-import { useEffect } from "react";
-import { useLocation, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 
 const Home = lazy(() => import("./pages/Home"));
 const Solutions = lazy(() => import("./pages/Solutions"));
@@ -82,6 +80,7 @@ const AdminLayout = () => {
 
 const Layout = () => (
   <ErrorBoundary>
+    <AuthProvider>
       <Header />
       <main className="pt-[var(--total-header-height)]">
         <Suspense fallback={<LoadingSpinner />}>
@@ -92,7 +91,8 @@ const Layout = () => (
         </Suspense>
       </main>
       <Footer />
-    </ErrorBoundary>
+    </AuthProvider>
+  </ErrorBoundary>
 );
 
 const router = createBrowserRouter([

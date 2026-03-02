@@ -41,15 +41,19 @@ const AdminLogin = () => {
         setIsRegistering(false);
       } else {
         localStorage.setItem('adminToken', data.token);
-        Swal.fire({
+
+        // Show success message
+        await Swal.fire({
           icon: 'success',
           title: 'Logged In',
           text: 'Redirecting to dashboard...',
-          timer: 1500,
+          timer: 1200,
           showConfirmButton: false,
-        }).then(() => {
-          navigate('/admin/dashboard');
         });
+
+        // Force redirect + reload to ensure protection re-evaluates
+        navigate('/admin/dashboard', { replace: true });
+        window.location.reload(); // ← This forces full re-evaluation of auth state
       }
     } catch (err) {
       Swal.fire({
