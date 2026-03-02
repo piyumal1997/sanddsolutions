@@ -10,7 +10,7 @@ import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import ErrorBoundary from "./components/common/ErrorBoundary";
-import SidebarNav from "./components/SidebarNav";
+import SidebarNav from "./components/common/SidebarNav";
 import {
   isAuthenticated,
   setupActivityListeners,
