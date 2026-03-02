@@ -1,71 +1,151 @@
-// client/src/utils/auth.js
-import Swal from 'sweetalert2';
+// server/src/routes/auth.js
+import express from "express";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import pool from "../config/db.js";
+import Joi from "joi"; 
 
-const TOKEN_KEY = 'adminToken';
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const router = express.Router();
 
-let timeoutId = null;
-let lastActivity = Date.now();
+// NEW: Validation schemas
+const registerSchema = Joi.object({
+  name: Joi.string().min(2).max(150).required(),
+  nic_number: Joi.string().min(10).max(20).required(),
+  email: Joi.string().email().required(),
+  password: Joi.string().min(8).required(),
+});
+const loginSchema = Joi.object({
+  password: Joi.string().required(),
+});
 
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-
-export const setToken = (token) => {
-  localStorage.setItem(TOKEN_KEY, token);
-  resetInactivityTimer();
-};
-
-export const removeToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-  clearTimeout(timeoutId);
-  window.location.href = '/admin'; // or '/login'
-};
-
-export const isAuthenticated = () => !!getToken();
-
-export const logout = () => {
-  removeToken();
-  Swal.fire({
-    icon: 'info',
-    title: 'Session Ended',
-    text: 'You have been logged out due to inactivity or invalid session.',
-    timer: 3000,
-  });
-};
-
-// Reset timer on user activity
-export const resetInactivityTimer = () => {
-  clearTimeout(timeoutId);
-  timeoutId = setTimeout(logout, INACTIVITY_TIMEOUT);
-  lastActivity = Date.now();
-};
-
-// Call this on mount + on user events (mousemove, keydown, etc.)
-export const setupActivityListeners = () => {
-  const events = ['mousemove', 'keydown', 'scroll', 'click'];
-  events.forEach(event => window.addEventListener(event, resetInactivityTimer));
-  return () => events.forEach(event => window.removeEventListener(event, resetInactivityTimer));
-};
-
-// Protected fetch wrapper (auto logout on 401)
-export const protectedFetch = async (url, options = {}) => {
-  const token = getToken();
-  if (!token) {
-    logout();
-    throw new Error('No token');
+// POST /api/auth/register (admin only – restrict in production!)
+router.post("/register", async (req, res) => {
+  const { error } = registerSchema.validate(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   }
 
-  const headers = {
-    ...options.headers,
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
+  const { name, nic_number, email, password } = req.body;
 
-  const res = await fetch(url, { ...options, headers });
+  try {
+    if (existing.length > 0)
+      return res.status(400).json({ message: "User already exists" });
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE email = ? OR nic_number = ?",
+      [email, nic_number],
+    );
 
-  if (res.status === 401) {
-    logout();
-    throw new Error('Session expired');
+    if (existing.length > 0) {
+      return res
+        .status(409)
+        .json({
+          success: false,
+          message: "Email or NIC number already registered",
+        });
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    await pool.query(
+      "INSERT INTO users (email, password, role) VALUES (?, ?, ?)",
+      [email, hashed, "admin"],
+      "INSERT INTO users (name, nic_number, email, password, role) VALUES (?, ?, ?, ?, ?)",
+      [name, nic_number, email, hashed, "admin"],
+    );
+
+    res.status(201).json({ message: "Admin registered – now login" });
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "Admin account created successfully. You can now log in.",
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+    console.error("Registration error:", err);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to create account",
+        error: err.message,
+      });
+  }
+});
+
+// POST /api/auth/login
+router.post("/login", async (req, res) => {
+  const { error } = loginSchema.validate(req.body);
+  if (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   }
 
-  return res;
-};
+  const { email, password } = req.body;
+
+  try {
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+    if (rows.length === 0)
+      return res.status(401).json({ message: "Invalid credentials" });
+
+    if (rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    const user = rows[0];
+
+    if (user.is_active !== 1) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Account is deactivated. Contact admin.",
+        });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    res.json({ token, user: { email: user.email } });
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: user.name,
+        },
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+    console.error("Login error:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Login failed", error: err.message });
+  }
+});
+
+export default router;

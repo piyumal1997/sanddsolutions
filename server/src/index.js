@@ -3,12 +3,12 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 
-import authRoutes from "./routes/auth.js";
+import auth from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
 import inquiryRoutes from "./routes/inquiries.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -80,7 +80,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // API v1 routes
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", auth);
 app.use("/api/projects", projectRoutes);
 app.use("/api/inquiries", inquiryRoutes);
 app.use("/api/admin", adminRoutes);
