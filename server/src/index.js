@@ -32,34 +32,34 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 //CORS configuration - tightened for production, open for development
-// app.use(
-//   cors({
-//     origin: [
-//       "https://sanddsolutions.lk",
-//       "https://www.sanddsolutions.lk",
-//       "http://localhost:5173",
-//       "http://localhost:3000",
-//     ],
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   }),
-// );
-
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [
-            "https://sanddsolutions.lk",
-            "https://www.sanddsolutions.lk",
-            "http://localhost:5173",
-            "http://localhost:3000",
-          ]
-        : true,
+    origin: [
+      "https://sanddsolutions.lk",
+      "https://www.sanddsolutions.lk",
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
-); // Tightened for prod
+);
+
+// app.use(
+//   cors({
+//     origin:
+//       process.env.NODE_ENV === "production"
+//         ? [
+//             "https://sanddsolutions.lk",
+//             "https://www.sanddsolutions.lk",
+//             "http://localhost:5173",
+//             "http://localhost:3000",
+//           ]
+//         : true,
+//     credentials: true,
+//   }),
+// ); // Tightened for prod
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
