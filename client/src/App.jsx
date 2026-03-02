@@ -18,7 +18,7 @@ import {
   protectedFetch,
   getCurrentUser,
   logout,
-} from "../utils/auth";
+} from "./utils/auth";
 import { useEffect } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 
