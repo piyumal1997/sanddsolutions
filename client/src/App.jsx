@@ -81,8 +81,7 @@ const AdminLayout = () => {
 };
 
 const Layout = () => (
-  <>
-    <ErrorBoundary>
+  <ErrorBoundary>
       <Header />
       <main className="pt-[var(--total-header-height)]">
         <Suspense fallback={<LoadingSpinner />}>
@@ -94,7 +93,6 @@ const Layout = () => (
       </main>
       <Footer />
     </ErrorBoundary>
-  </>
 );
 
 const router = createBrowserRouter([
