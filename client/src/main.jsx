@@ -4,6 +4,7 @@ import App from './App.jsx';
 import './index.css';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import "@fontsource/open-sans/400.css";
 
 AOS.init({
   duration: 800,
