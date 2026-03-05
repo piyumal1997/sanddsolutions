@@ -45,6 +45,7 @@ const InverterBrandsManagement = lazy(() => import("./pages/Admin/InverterBrands
 
 // In your App.jsx or wherever AdminLayout is defined
 // In App.jsx – replace your AdminLayout with this
+// AdminLayout (in App.jsx or your layout file)
 const AdminLayout = () => {
   const { user, loading } = useAuth();
 
@@ -62,11 +63,14 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <SidebarNav role={user.role} />
+      {/* Sidebar – fixed width, full height */}
+      <div className="hidden lg:block w-64 flex-shrink-0">
+        <SidebarNav role={user.role} />
+      </div>
 
-      {/* Main content – fills full height, no left gap on desktop */}
-      <div className="flex-1 flex flex-col lg:ml-20">
+      {/* Main content wrapper – takes all remaining space */}
+      <div className="flex-1 flex flex-col">
+        {/* Mobile sidebar overlay/drawer is handled inside SidebarNav */}
         <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
