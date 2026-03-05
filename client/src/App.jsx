@@ -34,12 +34,12 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
-const ProjectsManagement = lazy(() => import("./pages/admin/ProjectsManagement"));
-const UsersManagement = lazy(() => import("./pages/admin/UsersManagement"));
-const PackagesManagement = lazy(() => import("./pages/admin/PackagesManagement"));
-const PanelBrandsManagement = lazy(() => import("./pages/admin/PanelBrandsManagement"));
-const InverterBrandsManagement = lazy(() => import("./pages/admin/InverterBrandsManagement"));
+const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const ProjectsManagement = lazy(() => import("./pages/Admin/ProjectsManagement"));
+const UsersManagement = lazy(() => import("./pages/Admin/UsersManagement"));
+const PackagesManagement = lazy(() => import("./pages/Admin/PackagesManagement"));
+const PanelBrandsManagement = lazy(() => import("./pages/Admin/PanelBrandsManagement"));
+const InverterBrandsManagement = lazy(() => import("./pages/Admin/InverterBrandsManagement"));
 
 const PublicLayout = () => (
   <ErrorBoundary>
