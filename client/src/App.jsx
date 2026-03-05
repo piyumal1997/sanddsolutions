@@ -51,6 +51,7 @@ const AdminLayout = () => {
 
   useEffect(() => {
     if (user) {
+      // Assuming these are imported or defined elsewhere in your file
       const cleanup = setupActivityListeners();
       resetInactivityTimer();
       return cleanup;
@@ -63,15 +64,13 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar – fixed width, full height */}
-      <div className="hidden lg:block w-64 flex-shrink-0">
-        <SidebarNav role={user.role} />
-      </div>
+      {/* Sidebar */}
+      <SidebarNav role={user.role} />
 
-      {/* Main content wrapper – takes all remaining space */}
-      <div className="flex-1 flex flex-col">
-        {/* Mobile sidebar overlay/drawer is handled inside SidebarNav */}
-        <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
+      {/* Main content - min-w-0 prevents flexbox from blowing out width when tables get too big */}
+      {/* lg:ml-64 perfectly matches the w-64 of the sidebar */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        <main className="flex-1 p-6 lg:p-10 overflow-x-hidden overflow-y-auto">
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />
           </Suspense>
