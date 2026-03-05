@@ -1,8 +1,8 @@
 // server/src/routes/inquiries.js
-import express from "express";
-import nodemailer from "nodemailer";
-import pool from "../config/db.js";
-import Joi from "joi";
+import express from 'express';
+import nodemailer from 'nodemailer';
+import pool from '../config/db.js';
+import Joi from 'joi';
 
 const router = express.Router();
 
@@ -15,6 +15,36 @@ const inquirySchema = Joi.object({
   recaptcha_token: Joi.string().required(),
 });
 
+// Shared footer HTML (used in both emails)
+const COMPANY_LOGO_URL = 'https://www.sanddsolutions.lk/assets/sndlogo-F1IGRqvl.png'; // ← Replace with real logo URL
+
+const emailFooter = `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #4b5563;">
+    <tr>
+      <td align="center">
+        <img src="${COMPANY_LOGO_URL}" alt="S&D Solutions Logo" style="max-width: 180px; height: auto; margin-bottom: 16px;" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="color: #16a34a; font-weight: bold; font-size: 16px; margin-bottom: 8px;">
+        S&D Solutions (Pvt) Ltd
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="line-height: 1.6;">
+        <p style="margin: 4px 0;">Web: <a href="https://www.sanddsolutions.lk" style="color: #16a34a; text-decoration: none;">www.sanddsolutions.lk</a></p>
+        <p style="margin: 4px 0;">Email: <a href="mailto:info@sanddsolutions.lk" style="color: #16a34a; text-decoration: none;">info@sanddsolutions.lk</a></p>
+        <p style="margin: 4px 0;">Phone: +94 71 597 4895</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="margin-top: 16px; font-size: 12px; color: #6b7280;">
+        <p>© ${new Date().getFullYear()} S&D Solutions (Pvt) Ltd. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+`;
+
 // Public endpoint – no auth required
 router.post("/", async (req, res) => {
   const { error } = inquirySchema.validate(req.body);
@@ -26,8 +56,7 @@ router.post("/", async (req, res) => {
     });
   }
 
-  const { name, email, phone, inquiry_type, message, recaptcha_token } =
-    req.body;
+  const { name, email, phone, inquiry_type, message, recaptcha_token } = req.body;
 
   try {
     // 1. Verify reCAPTCHA
@@ -37,7 +66,7 @@ router.post("/", async (req, res) => {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptcha_token}`,
-      },
+      }
     );
 
     const verifyData = await verifyRes.json();
@@ -62,7 +91,7 @@ router.post("/", async (req, res) => {
         inquiry_type.trim(),
         message.trim(),
         verifyData.score || null,
-      ],
+      ]
     );
 
     const inquiryId = insertResult.insertId;
@@ -78,7 +107,9 @@ router.post("/", async (req, res) => {
       },
     });
 
-    // Admin notification
+    // ────────────────────────────────────────────────
+    // Admin / Team Notification Email
+    // ────────────────────────────────────────────────
     await transporter.sendMail({
       from: {
         name: `${name} via S&D Website`,
@@ -88,40 +119,40 @@ router.post("/", async (req, res) => {
       to: "info@sanddsolutions.lk",
       subject: `New Inquiry: ${name} - ${inquiry_type}`,
       html: `
-        <h2>New Contact Form Submission</h2>
+        <h2 style="color: #16a34a; margin-bottom: 16px;">New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+        <p><strong>Email:</strong> <a href="mailto:${email}" style="color: #16a34a;">${email}</a></p>
         <p><strong>Phone:</strong> ${phone || "N/A"}</p>
         <p><strong>Type:</strong> ${inquiry_type}</p>
         <p><strong>Message:</strong><br>${message.replace(/\n/g, "<br>")}</p>
         <p><small>reCAPTCHA score: ${verifyData.score || "N/A"}</small></p>
-        <hr>
-        <p style="color:#666; font-size:0.9em;">
-          This message was sent from the website contact form.<br>
-          Reply directly to reach the sender.
-        </p>
+        <hr style="border-color: #e5e7eb; margin: 24px 0;" />
+        ${emailFooter}
       `,
     });
 
-    // Auto-reply to user
+    // ────────────────────────────────────────────────
+    // Auto-reply to the person who submitted the inquiry
+    // ────────────────────────────────────────────────
     await transporter.sendMail({
       from: `"S&D Solutions" <noreply@sanddsolutions.lk>`,
       to: email,
       subject: "Thank You for Contacting S&D Solutions",
       html: `
         <p>Hi ${name},</p>
-        <p>Thank you for your message! We've received your inquiry and will get back to you within 24 hours.</p>
+        <p>Thank you for reaching out to us! We have received your inquiry and our team will get back to you within 24 hours.</p>
+        <p>We appreciate your interest in our services.</p>
         <p>Best regards,<br>
-        <strong>The S&D Solutions Team</strong><br>
-        Web: <a href="https://sanddsolutions.lk">sanddsolutions.lk</a><br>
-        Phone: ${process.env.COMPANY_PHONE || "+94 71 597 4895"}<br>
-        Email: <a href="mailto:info@sanddsolutions.lk">info@sanddsolutions.lk</a></p>
+        <strong>The S&D Solutions Team</strong></p>
+        
+        <hr style="border-color: #e5e7eb; margin: 24px 0;" />
+        ${emailFooter}
       `,
     });
 
     // 4. Create notifications for admins & managers
     const [recipients] = await pool.query(
-      "SELECT id FROM users WHERE role IN ('admin', 'manager') AND is_active = 1",
+      "SELECT id FROM users WHERE role IN ('admin', 'manager') AND is_active = 1"
     );
 
     for (const recipient of recipients) {
@@ -134,7 +165,7 @@ router.post("/", async (req, res) => {
           "New Customer Inquiry",
           `New inquiry from ${name} (${inquiry_type})`,
           inquiryId,
-        ],
+        ]
       );
     }
 
@@ -158,8 +189,7 @@ router.post("/", async (req, res) => {
       clientMessage = "This email or phone may already be registered.";
       status = 409;
     } else if (err.message.includes("reCAPTCHA")) {
-      clientMessage =
-        "reCAPTCHA verification failed. Please refresh and try again.";
+      clientMessage = "reCAPTCHA verification failed. Please refresh and try again.";
       status = 400;
     }
 
