@@ -26,6 +26,7 @@ const SidebarNav = ({ role }) => {
     { path: '/admin/packages', label: 'Solar Packages', icon: faBox },
     { path: '/admin/panel-brands', label: 'Panel Brands', icon: faBatteryFull },
     { path: '/admin/inverter-brands', label: 'Inverter Brands', icon: faBolt },
+    { path: '/admin/capacities', label: 'Capacities', icon: faBolt },
   ];
 
   if (role === 'admin') {
