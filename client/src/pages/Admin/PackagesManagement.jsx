@@ -11,14 +11,17 @@ const PackagesManagement = () => {
   const [panelCapacities, setPanelCapacities] = useState([]);
   const [inverterBrands, setInverterBrands] = useState([]);
   const [inverterCapacities, setInverterCapacities] = useState([]);
+  const [batteries, setBatteries] = useState([]); // ← New: batteries list
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     name: '',
+    package_type: 'On-Grid', // default
     panel_brand_id: '',
     panel_capacity_id: '',
     panel_count: '',
     inverter_brand_id: '',
     inverter_capacity_id: '',
+    battery_id: '', // only used for Off-Grid/Hybrid
     full_price_lkr: '',
     description: '',
   });
@@ -34,12 +37,15 @@ const PackagesManagement = () => {
     setError(null);
 
     try {
-      const [pkgRes, pbRes, pcRes, ibRes, icRes] = await Promise.all([
+      const [
+        pkgRes, pbRes, pcRes, ibRes, icRes, batRes
+      ] = await Promise.all([
         protectedFetch(`${API_BASE}/api/packages`),
         protectedFetch(`${API_BASE}/api/panel-brands`),
         protectedFetch(`${API_BASE}/api/panel-capacities`),
         protectedFetch(`${API_BASE}/api/inverter-brands`),
         protectedFetch(`${API_BASE}/api/inverter-capacities`),
+        protectedFetch(`${API_BASE}/api/batteries`), // ← New
       ]);
 
       const pkgData = await pkgRes.json();
@@ -56,9 +62,12 @@ const PackagesManagement = () => {
 
       const icData = await icRes.json();
       setInverterCapacities(icData.success ? icData.data || [] : []);
+
+      const batData = await batRes.json();
+      setBatteries(batData.success ? batData.data || [] : []);
     } catch (err) {
       console.error('Failed to load packages data:', err);
-      setError('Failed to load packages, brands, or capacities.');
+      setError('Failed to load packages, brands, capacities, or batteries.');
       Swal.fire({
         icon: 'error',
         title: 'Load Error',
@@ -72,15 +81,44 @@ const PackagesManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.name.trim() || !form.panel_brand_id || !form.panel_capacity_id ||
-        !form.panel_count || !form.inverter_brand_id || !form.inverter_capacity_id ||
+    // Required fields (common)
+    if (!form.name.trim() ||
+        !form.package_type ||
+        !form.panel_brand_id ||
+        !form.panel_capacity_id ||
+        !form.panel_count ||
+        !form.inverter_brand_id ||
+        !form.inverter_capacity_id ||
         !form.full_price_lkr) {
       Swal.fire('Error', 'All required fields must be filled', 'error');
       return;
     }
 
+    // Battery validation based on package_type
+    if (['Off-Grid', 'Hybrid'].includes(form.package_type) && !form.battery_id) {
+      Swal.fire('Error', 'Battery is required for Off-Grid or Hybrid packages', 'error');
+      return;
+    }
+
+    if (form.package_type === 'On-Grid' && form.battery_id) {
+      Swal.fire('Error', 'On-Grid packages cannot have a battery', 'error');
+      return;
+    }
+
     try {
-      const payload = { ...form };
+      const payload = {
+        name: form.name.trim(),
+        package_type: form.package_type,
+        panel_brand_id: form.panel_brand_id,
+        panel_capacity_id: form.panel_capacity_id,
+        panel_count: Number(form.panel_count),
+        inverter_brand_id: form.inverter_brand_id,
+        inverter_capacity_id: form.inverter_capacity_id,
+        battery_id: form.battery_id || null, // null for On-Grid
+        full_price_lkr: Number(form.full_price_lkr),
+        description: form.description.trim() || null,
+      };
+
       const url = editing ? `${API_BASE}/api/packages/${editing.id}` : `${API_BASE}/api/packages`;
       const method = editing ? 'PUT' : 'POST';
 
@@ -117,11 +155,13 @@ const PackagesManagement = () => {
     setEditing(null);
     setForm({
       name: '',
+      package_type: 'On-Grid',
       panel_brand_id: '',
       panel_capacity_id: '',
       panel_count: '',
       inverter_brand_id: '',
       inverter_capacity_id: '',
+      battery_id: '',
       full_price_lkr: '',
       description: '',
     });
@@ -131,11 +171,13 @@ const PackagesManagement = () => {
     setEditing(pkg);
     setForm({
       name: pkg.name || '',
+      package_type: pkg.package_type || 'On-Grid',
       panel_brand_id: pkg.panel_brand_id || '',
       panel_capacity_id: pkg.panel_capacity_id || '',
       panel_count: pkg.panel_count || '',
       inverter_brand_id: pkg.inverter_brand_id || '',
       inverter_capacity_id: pkg.inverter_capacity_id || '',
+      battery_id: pkg.battery_id || '',
       full_price_lkr: pkg.full_price_lkr || '',
       description: pkg.description || '',
     });
@@ -226,6 +268,49 @@ const PackagesManagement = () => {
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Package Type *</label>
+            <select
+              value={form.package_type}
+              onChange={(e) => {
+                const newType = e.target.value;
+                setForm({
+                  ...form,
+                  package_type: newType,
+                  battery_id: newType === 'On-Grid' ? '' : form.battery_id, // clear battery if On-Grid
+                });
+              }}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="On-Grid">On-Grid</option>
+              <option value="Off-Grid">Off-Grid</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+
+          {/* Battery – only for Off-Grid & Hybrid */}
+          {(form.package_type === 'Off-Grid' || form.package_type === 'Hybrid') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Battery *
+              </label>
+              <select
+                value={form.battery_id}
+                onChange={(e) => setForm({ ...form, battery_id: e.target.value })}
+                required
+                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="">Select Battery</option>
+                {batteries.map((bat) => (
+                  <option key={bat.id} value={bat.id}>
+                    {bat.brand} – {bat.capacity_kwh} kWh (LKR {Number(bat.price_lkr).toLocaleString()})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Panel Brand *</label>
@@ -370,9 +455,11 @@ const PackagesManagement = () => {
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Type</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Price (LKR)</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Panels</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Inverter</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Battery</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
@@ -382,6 +469,7 @@ const PackagesManagement = () => {
                 <tr key={pkg.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pkg.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{pkg.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 capitalize">{pkg.package_type}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                     {Number(pkg.full_price_lkr).toLocaleString()} LKR
                   </td>
@@ -394,6 +482,17 @@ const PackagesManagement = () => {
                     {pkg.inverter_capacity_kw || '?'} kW {pkg.inverter_type || ''}
                     <br />
                     <small>{inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || 'Unknown'}</small>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {pkg.battery_brand ? (
+                      <>
+                        {pkg.battery_brand} – {pkg.battery_capacity_kwh} kWh
+                        <br />
+                        <small>LKR {Number(pkg.battery_price_lkr).toLocaleString()}</small>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">None</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-gray-600">
                     {pkg.description ? (

@@ -18,6 +18,7 @@ import panelBrandRoutes from './routes/panel-brands.js';
 import panelCapacityRoutes from './routes/panel-capacities.js';
 import inverterBrandRoutes from './routes/inverter-brands.js';
 import inverterCapacityRoutes from './routes/inverter-capacities.js';
+import batteriesRouter from './routes/batteries.js';
 
 dotenv.config();
 
@@ -90,6 +91,7 @@ app.use('/api/panel-brands', panelBrandRoutes);
 app.use('/api/panel-capacities', panelCapacityRoutes);
 app.use('/api/inverter-brands', inverterBrandRoutes);
 app.use('/api/inverter-capacities', inverterCapacityRoutes);
+app.use('/api/batteries', batteriesRouter);
 
 
 // Serve React frontend in production (updated to serve from 'public' subdir)
