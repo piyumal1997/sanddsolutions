@@ -1,42 +1,49 @@
-// src/pages/admin/PanelCapacitiesManagement.jsx
+// src/pages/admin/BrandsManagement.jsx
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { protectedFetch } from '../../utils/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-const PanelCapacitiesManagement = () => {
-  const [capacities, setCapacities] = useState([]);
+const BrandsManagement = () => {
+  const [activeTab, setActiveTab] = useState('panel'); // 'panel' or 'inverter'
+  const [brands, setBrands] = useState([]); // current list
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
-    wattage: '',
-    description: '',
+    name: '',
+    country: '',
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadCapacities();
-  }, []);
+    loadBrands(activeTab);
+  }, [activeTab]);
 
-  const loadCapacities = async () => {
+  const loadBrands = async (tab) => {
     setLoading(true);
     setError(null);
+    setBrands([]);
 
     try {
-      const res = await protectedFetch(`${API_BASE}/api/panel-capacities`);
+      const endpoint = tab === 'panel' ? '/api/panel-brands' : '/api/inverter-brands';
+      const res = await protectedFetch(`${API_BASE}${endpoint}`);
+      
       if (!res.ok) {
-        throw new Error('Failed to load panel capacities');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Failed to load ${tab} brands (HTTP ${res.status})`);
       }
-      const { data } = await res.json();
-      setCapacities(data || []);
+
+      const json = await res.json();
+      setBrands(json.data || []);
     } catch (err) {
-      console.error('Error loading panel capacities:', err);
-      setError('Failed to load panel capacities. Please try again.');
+      console.error(`Error loading ${tab} brands:`, err);
+      const errorMsg = err.message || 'Unknown error';
+      setError(`Failed to load ${tab} brands: ${errorMsg}`);
       Swal.fire({
         icon: 'error',
         title: 'Load Error',
-        text: err.message || 'Could not load panel capacities.',
+        text: errorMsg,
       });
     } finally {
       setLoading(false);
@@ -46,18 +53,19 @@ const PanelCapacitiesManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.wattage || isNaN(form.wattage) || form.wattage < 100 || form.wattage > 1000) {
-      Swal.fire('Error', 'Wattage must be a number between 100 and 1000', 'error');
+    if (!form.name.trim()) {
+      Swal.fire('Error', 'Brand name is required', 'error');
       return;
     }
 
     try {
       const payload = {
-        wattage: Number(form.wattage),
-        description: form.description.trim() || null,
+        name: form.name.trim(),
+        country: form.country.trim() || null,
       };
 
-      const url = editing ? `${API_BASE}/api/panel-capacities/${editing.id}` : `${API_BASE}/api/panel-capacities`;
+      const endpoint = activeTab === 'panel' ? '/api/panel-brands' : '/api/inverter-brands';
+      const url = editing ? `${API_BASE}${endpoint}/${editing.id}` : `${API_BASE}${endpoint}`;
       const method = editing ? 'PUT' : 'POST';
 
       const res = await protectedFetch(url, {
@@ -67,84 +75,91 @@ const PanelCapacitiesManagement = () => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
       }
 
       Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: editing ? 'Capacity updated successfully' : 'Capacity added successfully',
+        text: editing ? 'Brand updated successfully' : 'Brand added successfully',
         timer: 2000,
       });
 
-      loadCapacities();
+      loadBrands(activeTab);
       resetForm();
     } catch (err) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Failed to save panel capacity',
+        text: err.message || 'Failed to save brand',
       });
     }
   };
 
   const resetForm = () => {
     setEditing(null);
-    setForm({ wattage: '', description: '' });
+    setForm({ name: '', country: '' });
   };
 
-  const handleEdit = (capacity) => {
-    setEditing(capacity);
+  const handleEdit = (brand) => {
+    setEditing(brand);
     setForm({
-      wattage: capacity.wattage || '',
-      description: capacity.description || '',
+      name: brand.name || '',
+      country: brand.country || '',
     });
   };
 
   const handleDelete = async (id) => {
+    const tabName = activeTab === 'panel' ? 'Panel' : 'Inverter';
     const confirmed = await Swal.fire({
-      title: 'Deactivate Capacity?',
-      text: 'This will hide it from selection (soft delete). You can reactivate later.',
+      title: `Delete ${tabName} Brand?`,
+      text: 'This action is permanent and cannot be undone. Related packages may be affected.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, deactivate',
+      confirmButtonText: 'Yes, delete permanently',
     });
 
     if (!confirmed.isConfirmed) return;
 
     try {
-      const res = await protectedFetch(`${API_BASE}/api/panel-capacities/${id}`, {
+      const endpoint = activeTab === 'panel' ? '/api/panel-brands' : '/api/inverter-brands';
+      const res = await protectedFetch(`${API_BASE}${endpoint}/${id}`, {
         method: 'DELETE',
       });
 
-      if (!res.ok) throw new Error('Failed to deactivate');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete');
+      }
 
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Capacity deactivated',
+        title: 'Deleted',
+        text: `${tabName} brand deleted successfully`,
         timer: 2000,
       });
 
-      loadCapacities();
+      loadBrands(activeTab);
     } catch (err) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Failed to deactivate capacity',
+        text: err.message || 'Failed to delete brand',
       });
     }
   };
+
+  const isPanelTab = activeTab === 'panel';
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-700">Loading panel capacities...</p>
+          <p className="text-xl text-gray-700">Loading brands...</p>
         </div>
       </div>
     );
@@ -157,7 +172,7 @@ const PanelCapacitiesManagement = () => {
           <p className="text-2xl text-red-600 mb-4">Error Loading Data</p>
           <p className="text-gray-700 mb-6">{error}</p>
           <button
-            onClick={loadCapacities}
+            onClick={() => loadBrands(activeTab)}
             className="px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
           >
             Try Again
@@ -169,26 +184,55 @@ const PanelCapacitiesManagement = () => {
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">Panel Capacities Management</h1>
+      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">
+        Brands Management
+      </h1>
+
+      {/* Tabs */}
+      <div className="mb-8 flex border-b border-gray-200">
+        <button
+          onClick={() => {
+            setActiveTab('panel');
+            resetForm();
+          }}
+          className={`flex-1 py-4 text-center font-medium transition ${
+            isPanelTab
+              ? 'border-b-4 border-green-600 text-green-600'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Panel Brands
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('inverter');
+            resetForm();
+          }}
+          className={`flex-1 py-4 text-center font-medium transition ${
+            !isPanelTab
+              ? 'border-b-4 border-green-600 text-green-600'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Inverter Brands
+        </button>
+      </div>
 
       {/* Form Section */}
       <div className="bg-white p-8 lg:p-10 rounded-2xl shadow-xl mb-12">
         <h2 className="text-3xl font-bold mb-8">
-          {editing ? 'Edit Panel Capacity' : 'Add New Panel Capacity'}
+          {editing ? 'Edit Brand' : `Add New ${isPanelTab ? 'Panel' : 'Inverter'} Brand`}
         </h2>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wattage (W) *
+              Brand Name *
             </label>
             <input
-              type="number"
-              placeholder="e.g. 550"
-              value={form.wattage}
-              onChange={(e) => setForm({ ...form, wattage: e.target.value })}
-              min="100"
-              max="1000"
+              placeholder={isPanelTab ? 'e.g. Longi, Jinko, Trina' : 'e.g. Huawei, Growatt, SMA'}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
@@ -196,12 +240,12 @@ const PanelCapacitiesManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (optional)
+              Country (optional)
             </label>
             <input
-              placeholder="e.g. Monocrystalline, Half-cut"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="e.g. China, USA, Germany"
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value })}
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
@@ -211,7 +255,7 @@ const PanelCapacitiesManagement = () => {
               type="submit"
               className="flex-1 bg-green-600 text-white py-4 rounded-xl hover:bg-green-700 transition font-semibold shadow-md"
             >
-              {editing ? 'Update Capacity' : 'Add Capacity'}
+              {editing ? 'Update Brand' : 'Add Brand'}
             </button>
 
             {editing && (
@@ -227,15 +271,15 @@ const PanelCapacitiesManagement = () => {
         </form>
       </div>
 
-      {/* Capacities Table */}
+      {/* Brands Table */}
       <h2 className="text-3xl font-bold mb-8 text-gray-900">
-        All Panel Capacities ({capacities.length})
+        All {isPanelTab ? 'Panel' : 'Inverter'} Brands ({brands.length})
       </h2>
 
-      {capacities.length === 0 ? (
+      {brands.length === 0 ? (
         <div className="bg-white p-10 rounded-2xl shadow text-center text-gray-600">
-          <p className="text-xl">No panel capacities added yet.</p>
-          <p className="mt-2">Add your first capacity using the form above.</p>
+          <p className="text-xl">No {isPanelTab ? 'panel' : 'inverter'} brands added yet.</p>
+          <p className="mt-2">Add your first brand using the form above.</p>
         </div>
       ) : (
         <div className="overflow-x-auto bg-white rounded-2xl shadow-xl">
@@ -243,35 +287,35 @@ const PanelCapacitiesManagement = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Wattage (W)</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Brand Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Country</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Created At</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {capacities.map((capacity) => (
-                <tr key={capacity.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{capacity.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{capacity.wattage} W</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {capacity.description || <span className="text-gray-400">No description</span>}
+              {brands.map((brand) => (
+                <tr key={brand.id} className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{brand.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{brand.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {brand.country || <span className="text-gray-400">Not specified</span>}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(capacity.created_at).toLocaleDateString()}
+                    {new Date(brand.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
-                      onClick={() => handleEdit(capacity)}
+                      onClick={() => handleEdit(brand)}
                       className="text-blue-600 hover:text-blue-800 mr-4 transition"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(capacity.id)}
+                      onClick={() => handleDelete(brand.id)}
                       className="text-red-600 hover:text-red-800 transition"
                     >
-                      Deactivate
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -284,4 +328,4 @@ const PanelCapacitiesManagement = () => {
   );
 };
 
-export default PanelCapacitiesManagement;
+export default BrandsManagement;
