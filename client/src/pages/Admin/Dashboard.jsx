@@ -1,11 +1,13 @@
 // src/pages/admin/Dashboard.jsx
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; // ← Add this import
 import Swal from 'sweetalert2';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { protectedFetch } from '../../utils/auth';
 
-const Dashboard = ({ user }) => {
+const Dashboard = () => { // ← Remove ({ user }) prop
+  const { user } = useAuth(); // ← Use context instead
+
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -152,40 +154,26 @@ const Dashboard = ({ user }) => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link
-          to="/admin/projects"
-          className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
-        >
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Projects</h3>
           <p className="text-gray-600">Manage showcase entries</p>
-        </Link>
+        </div>
 
-        <Link
-          to="/admin/packages"
-          className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
-        >
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Packages</h3>
           <p className="text-gray-600">Solar system offerings</p>
-        </Link>
+        </div>
 
-        {user.role === 'admin' && (
-          <Link
-            to="/admin/users"
-            className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
-          >
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">Users</h3>
-            <p className="text-gray-600">Manage team accounts</p>
-          </Link>
-        )}
-
-        <Link
-          to="/admin/panel-brands"
-          className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
-        >
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Panel Brands</h3>
-          <p className="text-gray-600">Manage panel manufacturers</p>
-        </Link>
+          <p className="text-gray-600">Manage panel brands</p>
+        </div>
+
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Inverter Brands</h3>
+          <p className="text-gray-600">Manage inverter brands</p>
+        </div>
       </div>
     </div>
   );
