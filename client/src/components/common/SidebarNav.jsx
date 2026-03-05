@@ -50,7 +50,7 @@ const SidebarNav = ({ role }) => {
 
   return (
     <>
-      {/* Mobile Hamburger */}
+      {/* Mobile Hamburger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gray-900 text-white rounded-full shadow-lg focus:outline-none"
@@ -68,7 +68,7 @@ const SidebarNav = ({ role }) => {
 
       {/* Sidebar */}
       <aside
-        className={`w-64 bg-gray-900 text-white fixed top-0 left-0 z-50 h-full flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`w-64 bg-gray-900 text-white fixed inset-y-0 left-0 z-50 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:relative lg:translate-x-0`}
       >
@@ -83,7 +83,7 @@ const SidebarNav = ({ role }) => {
           </button>
         </div>
 
-        {/* Links – scrollable if many */}
+        {/* Navigation Links */}
         <nav className="flex-1 p-4 overflow-y-auto">
           {links.map((link) => (
             <Link
@@ -102,7 +102,7 @@ const SidebarNav = ({ role }) => {
           ))}
         </nav>
 
-        {/* Logout at bottom – no extra space */}
+        {/* Logout Button – pushed to bottom with mt-auto */}
         <div className="p-4 border-t border-gray-800 mt-auto">
           <button
             onClick={handleLogout}
