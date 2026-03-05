@@ -1,12 +1,12 @@
 // src/pages/admin/Dashboard.jsx
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext'; // ← Add this import
 import Swal from 'sweetalert2';
 import { BellIcon } from '@heroicons/react/24/outline';
 import { protectedFetch } from '../../utils/auth';
+import { useAuth } from '../../context/AuthContext'; // Add this import to access user from context
 
-const Dashboard = () => { // ← Remove ({ user }) prop
-  const { user } = useAuth(); // ← Use context instead
+const Dashboard = () => {
+  const { user } = useAuth(); // Get user from context
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -24,7 +24,6 @@ const Dashboard = () => { // ← Remove ({ user }) prop
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // Notifications
       const notifRes = await protectedFetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications`);
       if (notifRes.ok) {
         const { data } = await notifRes.json();
@@ -70,13 +69,12 @@ const Dashboard = () => { // ← Remove ({ user }) prop
 
   return (
     <div className="p-6 lg:p-10">
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900">
-            Welcome back, {user.email.split('@')[0]}
+            Welcome back, {user ? user.email.split('@')[0] : 'User'}
           </h1>
-          <p className="text-xl text-gray-600 mt-2 capitalize">{user.role} Dashboard</p>
+          <p className="text-xl text-gray-600 mt-2 capitalize">{user ? user.role : 'Guest'} Dashboard</p>
         </div>
 
         {/* Notification Bell */}
@@ -154,7 +152,7 @@ const Dashboard = () => { // ← Remove ({ user }) prop
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Projects</h3>
           <p className="text-gray-600">Manage showcase entries</p>
