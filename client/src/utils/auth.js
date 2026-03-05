@@ -6,11 +6,10 @@ const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 let inactivityTimer = null;
 
-// ────────────────────────────────────────────────
-// Token Management
-// ────────────────────────────────────────────────
+// Get token safely
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 
+// Set token + reset timer
 export const setToken = (token) => {
   if (token) {
     localStorage.setItem(TOKEN_KEY, token);
@@ -23,32 +22,25 @@ export const removeToken = () => {
   clearTimeout(inactivityTimer);
 };
 
-// ────────────────────────────────────────────────
-// Authentication Check
-// ────────────────────────────────────────────────
+// Safe isAuthenticated (no crash on undefined token)
 export const isAuthenticated = () => {
   const token = getToken();
-  if (!token) return false;
+  if (!token || typeof token !== 'string') return false;
 
-  // Optional: basic JWT format check (can be expanded)
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const exp = payload.exp * 1000; // convert to ms
+    const [, payloadBase64] = token.split('.');
+    if (!payloadBase64) return false;
+
+    const payload = JSON.parse(atob(payloadBase64));
+    const exp = payload.exp * 1000;
     return exp > Date.now();
   } catch {
     return false;
   }
 };
 
-// ────────────────────────────────────────────────
-// Auto-Logout on Inactivity
-// ────────────────────────────────────────────────
-export const resetInactivityTimer = () => {
-  clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(logout, INACTIVITY_TIMEOUT_MS);
-};
-
-export const logout = (reason = 'Session expired due to inactivity') => {
+// Logout with reason
+export const logout = (reason = 'Session expired') => {
   removeToken();
   Swal.fire({
     icon: 'info',
@@ -57,36 +49,31 @@ export const logout = (reason = 'Session expired due to inactivity') => {
     timer: 2500,
     showConfirmButton: false,
   }).then(() => {
-    window.location.href = '/admin'; // redirect to login
+    window.location.href = '/admin';
   });
 };
 
-// ────────────────────────────────────────────────
-// Setup Activity Listeners (call this once on mount)
-// ────────────────────────────────────────────────
+// Reset inactivity timer
+export const resetInactivityTimer = () => {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => logout('Inactivity timeout'), INACTIVITY_TIMEOUT_MS);
+};
+
+// Setup listeners (call once when logged in)
 export const setupActivityListeners = () => {
   const events = ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'];
 
-  const handleActivity = () => {
-    resetInactivityTimer();
-  };
+  const handleActivity = () => resetInactivityTimer();
 
-  events.forEach(event => {
-    window.addEventListener(event, handleActivity, { passive: true });
-  });
+  events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
 
-  // Cleanup function
   return () => {
-    events.forEach(event => {
-      window.removeEventListener(event, handleActivity);
-    });
+    events.forEach(event => window.removeEventListener(event, handleActivity));
     clearTimeout(inactivityTimer);
   };
 };
 
-// ────────────────────────────────────────────────
-// Protected Fetch Wrapper (auto logout on 401)
-// ────────────────────────────────────────────────
+// Safe protected fetch
 export const protectedFetch = async (url, options = {}) => {
   const token = getToken();
 
@@ -95,44 +82,38 @@ export const protectedFetch = async (url, options = {}) => {
     throw new Error('No authentication token');
   }
 
-  const defaultHeaders = {
+  const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
+    ...options.headers,
   };
 
-  const finalOptions = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  };
+  const response = await fetch(url, { ...options, headers });
 
-  const response = await fetch(url, finalOptions);
-
-  // Auto-logout on 401 (token invalid/expired)
   if (response.status === 401) {
-    logout('Session expired or invalid. Please log in again.');
+    logout('Session expired or invalid');
     throw new Error('Unauthorized - session expired');
   }
 
   return response;
 };
 
-// ────────────────────────────────────────────────
-// Optional: Get current user info from token (without API call)
-// ────────────────────────────────────────────────
+// Get user from token (safe, no crash)
 export const getCurrentUser = () => {
   const token = getToken();
-  if (!token) return null;
+  if (!token || typeof token !== 'string') return null;
 
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const [, payloadBase64] = token.split('.');
+    if (!payloadBase64) return null;
+
+    const payload = JSON.parse(atob(payloadBase64));
+    if (payload.exp * 1000 <= Date.now()) return null;
+
     return {
       id: payload.id,
       email: payload.email,
       role: payload.role,
-      exp: payload.exp,
     };
   } catch {
     return null;
