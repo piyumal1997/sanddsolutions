@@ -1,43 +1,119 @@
-// client/src/components/SidebarNav.jsx
+// src/components/common/SidebarNav.jsx
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faHome,
+  faUsers,
+  faSun,
+  faBox,
+  faBatteryFull,
+  faBolt,
+  faSignOutAlt,
+  faBars,
+  faTimes,
+} from '@fortawesome/free-solid-svg-icons';
+import { logout } from '../../utils/auth'; // Your logout function
 
 const SidebarNav = ({ role }) => {
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const links = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: '🏠' },
-    { path: '/admin/projects', label: 'Projects', icon: '☀️' },
-    { path: '/admin/packages', label: 'Solar Packages', icon: '📦' },
-    { path: '/admin/panel-brands', label: 'Panel Brands', icon: '🔋' },
-    { path: '/admin/inverter-brands', label: 'Inverter Brands', icon: '⚡' },
+    { path: '/admin/dashboard', label: 'Dashboard', icon: faHome },
+    { path: '/admin/projects', label: 'Projects', icon: faSun },
+    { path: '/admin/packages', label: 'Solar Packages', icon: faBox },
+    { path: '/admin/panel-brands', label: 'Panel Brands', icon: faBatteryFull },
+    { path: '/admin/inverter-brands', label: 'Inverter Brands', icon: faBolt },
   ];
 
+  // Only add Users link for admin
   if (role === 'admin') {
-    links.splice(1, 0, { path: '/admin/users', label: 'Users', icon: '👥' });
+    links.splice(1, 0, { path: '/admin/users', label: 'Users', icon: faUsers });
   }
 
+  const handleLogout = async () => {
+    const confirmed = await Swal.fire({
+      title: 'Log out?',
+      text: 'You will be logged out of the admin panel.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, log out',
+    });
+
+    if (confirmed.isConfirmed) {
+      logout('You have been logged out successfully.');
+    }
+  };
+
   return (
-    <aside className="w-64 bg-gray-900 text-white h-screen fixed top-0 left-0 flex flex-col">
-      <div className="p-6 text-2xl font-bold border-b border-gray-800">
-        S&D Admin
-      </div>
-      <nav className="flex-1 p-4">
-        {links.map(link => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className={`flex items-center gap-3 p-4 rounded-lg mb-2 transition ${
-              location.pathname === link.path
-                ? 'bg-green-600 text-white'
-                : 'hover:bg-gray-800'
-            }`}
+    <>
+      {/* Mobile Hamburger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gray-900 text-white rounded-full shadow-lg focus:outline-none"
+      >
+        <FontAwesomeIcon icon={isOpen ? faTimes : faBars} size="lg" />
+      </button>
+
+      {/* Overlay for mobile when sidebar is open */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`w-64 bg-gray-900 text-white h-screen fixed top-0 left-0 z-50 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:relative lg:translate-x-0`}
+      >
+        {/* Logo/Header */}
+        <div className="p-6 text-2xl font-bold border-b border-gray-800 flex items-center justify-between">
+          <span>S & D Admin</span>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden text-white focus:outline-none"
           >
-            <span>{link.icon}</span>
-            {link.label}
-          </Link>
-        ))}
-      </nav>
-    </aside>
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 overflow-y-auto">
+          {links.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={() => setIsOpen(false)} // Close on mobile after click
+              className={`flex items-center gap-3 p-4 rounded-lg mb-2 transition ${
+                location.pathname === link.path
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-gray-800 text-gray-300'
+              }`}
+            >
+              <FontAwesomeIcon icon={link.icon} className="w-5 h-5" />
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Logout Button at Bottom */}
+        <div className="p-4 border-t border-gray-800">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full p-4 rounded-lg text-red-400 hover:bg-gray-800 hover:text-red-300 transition"
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
