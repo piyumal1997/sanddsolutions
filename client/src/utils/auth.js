@@ -75,13 +75,9 @@ export const setupActivityListeners = () => {
 
 // Safe protected fetch
 export const protectedFetch = async (url, options = {}) => {
-  const token = localStorage.getItem('adminToken');
-  console.log('protectedFetch called for:', url);
-  console.log('Token exists?', !!token);
-  if (token) console.log('Token first 10 chars:', token.substring(0, 10));
+  const token = getToken();
 
   if (!token) {
-    console.warn('No token found - logging out');
     logout('No active session');
     throw new Error('No authentication token');
   }
@@ -92,12 +88,9 @@ export const protectedFetch = async (url, options = {}) => {
     ...options.headers,
   };
 
-  console.log('Sending request with headers:', headers);
-
   const response = await fetch(url, { ...options, headers });
 
   if (response.status === 401) {
-    console.warn('401 received - logging out');
     logout('Session expired or invalid');
     throw new Error('Unauthorized - session expired');
   }

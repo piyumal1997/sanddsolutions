@@ -1,3 +1,4 @@
+// server/src/routes/inverter-capacities.js
 import express from 'express';
 import pool from '../config/db.js';
 import { protect, restrictTo } from '../middleware/authMiddleware.js';
@@ -17,33 +18,37 @@ const capacitySchema = Joi.object({
   }),
   type: Joi.string().valid('string', 'hybrid', 'micro', 'off-grid').required(),
   description: Joi.string().max(150).allow(null, ''),
-  is_active: Joi.number().valid(0, 1).default(1),
 });
 
 // GET all inverter capacities
 router.get('/', async (req, res) => {
   try {
-    const showInactive = req.query.showInactive === 'true';
-    const where = showInactive ? '' : 'WHERE is_active = 1';
-
     const [rows] = await pool.query(
       `SELECT id, capacity_kw, type, description, created_at, updated_at
        FROM inverter_capacities
-       ${where}
        ORDER BY capacity_kw ASC`
     );
 
     res.json({ success: true, data: rows });
   } catch (err) {
     console.error('GET /inverter-capacities error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to load inverter capacities' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load inverter capacities',
+      error: err.message,
+    });
   }
 });
 
-// POST create inverter capacity
+// POST create new inverter capacity
 router.post('/', async (req, res) => {
   const { error } = capacitySchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
+  }
 
   try {
     const { capacity_kw, type, description } = req.body;
@@ -72,54 +77,84 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     console.error('POST /inverter-capacities error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to create inverter capacity', error: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create inverter capacity',
+      error: err.message,
+    });
   }
 });
 
 // PUT update inverter capacity
 router.put('/:id', async (req, res) => {
   const { error } = capacitySchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
+  }
 
   try {
     const { id } = req.params;
-    const { capacity_kw, type, description, is_active } = req.body;
+    const { capacity_kw, type, description } = req.body;
 
     const [result] = await pool.query(
       `UPDATE inverter_capacities 
-       SET capacity_kw = ?, type = ?, description = ?, is_active = ?, updated_at = NOW()
+       SET capacity_kw = ?, type = ?, description = ?, updated_at = NOW()
        WHERE id = ?`,
-      [capacity_kw, type, description?.trim() || null, is_active ?? 1, id]
+      [capacity_kw, type, description?.trim() || null, id]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Inverter capacity not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Inverter capacity not found',
+      });
     }
 
-    res.json({ success: true, message: 'Inverter capacity updated successfully' });
+    res.json({
+      success: true,
+      message: 'Inverter capacity updated successfully',
+    });
   } catch (err) {
     console.error('PUT /inverter-capacities error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to update inverter capacity', error: err.message });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update inverter capacity',
+      error: err.message,
+    });
   }
 });
 
-// DELETE = soft delete
+// DELETE – hard delete (permanent removal)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
     const [result] = await pool.query(
-      'UPDATE inverter_capacities SET is_active = 0, updated_at = NOW() WHERE id = ?',
+      'DELETE FROM inverter_capacities WHERE id = ?',
       [id]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Inverter capacity not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Inverter capacity not found',
+      });
     }
 
-    res.json({ success: true, message: 'Inverter capacity deactivated successfully' });
+    res.json({
+      success: true,
+      message: 'Inverter capacity deleted successfully',
+    });
   } catch (err) {
     console.error('DELETE /inverter-capacities error:', err.message);
-    res.status(500).json({ success: false, message: 'Failed to deactivate inverter capacity' });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete inverter capacity',
+      error: err.message,
+    });
   }
 });
 

@@ -6,20 +6,18 @@ import { protectedFetch } from '../../utils/auth';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const CapacitiesManagement = () => {
-  // Shared state
   const [activeTab, setActiveTab] = useState('panel'); // 'panel' or 'inverter'
-  const [items, setItems] = useState([]); // current list (panel or inverter)
+  const [items, setItems] = useState([]); // current list
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
-    wattage: '',           // for panel
-    capacity_kw: '',       // for inverter
-    type: '',              // for inverter only
+    wattage: '',           // panel only
+    capacity_kw: '',       // inverter only
+    type: '',              // inverter only
     description: '',
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load data based on active tab
   useEffect(() => {
     loadData(activeTab);
   }, [activeTab]);
@@ -34,18 +32,20 @@ const CapacitiesManagement = () => {
       const res = await protectedFetch(`${API_BASE}${endpoint}`);
       
       if (!res.ok) {
-        throw new Error(`Failed to load ${tab} capacities`);
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Failed to load ${tab} capacities (HTTP ${res.status})`);
       }
 
-      const { data } = await res.json();
-      setItems(data || []);
+      const json = await res.json();
+      setItems(json.data || []);
     } catch (err) {
       console.error(`Error loading ${tab} capacities:`, err);
-      setError(`Failed to load ${tab} capacities. Please try again.`);
+      const errorMsg = err.message || 'Unknown error';
+      setError(`Failed to load ${tab} capacities: ${errorMsg}`);
       Swal.fire({
         icon: 'error',
         title: 'Load Error',
-        text: err.message || `Could not load ${tab} capacities.`,
+        text: errorMsg,
       });
     } finally {
       setLoading(false);
@@ -60,14 +60,14 @@ const CapacitiesManagement = () => {
     if (activeTab === 'panel') {
       const wattageNum = Number(form.wattage);
       if (isNaN(wattageNum) || wattageNum < 100 || wattageNum > 1000) {
-        Swal.fire('Error', 'Wattage must be between 100 and 1000', 'error');
+        Swal.fire('Error', 'Wattage must be a number between 100 and 1000', 'error');
         return;
       }
       payload.wattage = wattageNum;
     } else {
       const capacityNum = Number(form.capacity_kw);
       if (isNaN(capacityNum) || capacityNum < 0.5 || capacityNum > 100) {
-        Swal.fire('Error', 'Capacity must be between 0.5 and 100 kW', 'error');
+        Swal.fire('Error', 'Capacity must be a number between 0.5 and 100 kW', 'error');
         return;
       }
       if (!form.type) {
@@ -90,14 +90,14 @@ const CapacitiesManagement = () => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
       }
 
       Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: editing ? 'Capacity updated' : 'Capacity added',
+        text: editing ? 'Capacity updated successfully' : 'Capacity added successfully',
         timer: 2000,
       });
 
@@ -133,14 +133,15 @@ const CapacitiesManagement = () => {
   };
 
   const handleDelete = async (id) => {
+    const tabName = activeTab === 'panel' ? 'Panel' : 'Inverter';
     const confirmed = await Swal.fire({
-      title: 'Deactivate Capacity?',
-      text: 'This will hide it from selection (soft delete). You can reactivate later.',
+      title: `Delete ${tabName} Capacity?`,
+      text: 'This action is permanent and cannot be undone.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, deactivate',
+      confirmButtonText: 'Yes, delete permanently',
     });
 
     if (!confirmed.isConfirmed) return;
@@ -151,12 +152,15 @@ const CapacitiesManagement = () => {
         method: 'DELETE',
       });
 
-      if (!res.ok) throw new Error('Failed to deactivate');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete');
+      }
 
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Capacity deactivated',
+        title: 'Deleted',
+        text: `${tabName} capacity deleted successfully`,
         timer: 2000,
       });
 
@@ -165,7 +169,7 @@ const CapacitiesManagement = () => {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Failed to deactivate capacity',
+        text: err.message || 'Failed to delete capacity',
       });
     }
   };
@@ -203,7 +207,7 @@ const CapacitiesManagement = () => {
   return (
     <div className="p-6 lg:p-10">
       <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">
-        {isPanelTab ? 'Panel Capacities' : 'Inverter Capacities'} Management
+        Capacities Management
       </h1>
 
       {/* Tabs */}
@@ -320,10 +324,10 @@ const CapacitiesManagement = () => {
 
       {/* Table Section */}
       <h2 className="text-3xl font-bold mb-8 text-gray-900">
-        All {isPanelTab ? 'Panel' : 'Inverter'} Capacities ({capacities.length})
+        All {isPanelTab ? 'Panel' : 'Inverter'} Capacities ({items.length})
       </h2>
 
-      {capacities.length === 0 ? (
+      {items.length === 0 ? (
         <div className="bg-white p-10 rounded-2xl shadow text-center text-gray-600">
           <p className="text-xl">No {isPanelTab ? 'panel' : 'inverter'} capacities added yet.</p>
           <p className="mt-2">Add your first capacity using the form above.</p>
@@ -346,7 +350,7 @@ const CapacitiesManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {capacities.map((item) => (
+              {items.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
@@ -374,7 +378,7 @@ const CapacitiesManagement = () => {
                       onClick={() => handleDelete(item.id)}
                       className="text-red-600 hover:text-red-800 transition"
                     >
-                      Deactivate
+                      Delete
                     </button>
                   </td>
                 </tr>
