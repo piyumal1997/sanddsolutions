@@ -43,9 +43,9 @@ const PackagesManagement = lazy(() => import("./pages/Admin/PackagesManagement")
 const PanelBrandsManagement = lazy(() => import("./pages/Admin/PanelBrandsManagement"));
 const InverterBrandsManagement = lazy(() => import("./pages/Admin/InverterBrandsManagement"));
 
+// In your App.jsx or wherever AdminLayout is defined
 const AdminLayout = () => {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
   useEffect(() => {
     if (user) {
@@ -55,22 +55,23 @@ const AdminLayout = () => {
     }
   }, [user]);
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  if (loading) return <LoadingSpinner />;
 
-  if (!user) {
-    return <Navigate to="/admin" replace state={{ from: location }} />;
-  }
+  if (!user) return <Navigate to="/admin" replace />;
 
   return (
-    <div className="flex min-h-screen">
-      <SidebarNav />
-      <main className="flex-1 ml-64 bg-gray-50 p-8">
-        <Suspense fallback={<LoadingSpinner />}>
-          <Outlet />
-        </Suspense>
-      </main>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <SidebarNav role={user.role} />
+
+      {/* Main content – fills remaining space, no gap */}
+      <div className="flex-1 flex flex-col lg:ml-64">
+        <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
     </div>
   );
 };
