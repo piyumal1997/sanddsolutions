@@ -41,7 +41,7 @@ const AdminLogin = () => {
         setIsRegistering(false);
       } else {
         // Use context login → updates global state
-        login(data.token);
+        login(data.data.token);
 
         await Swal.fire({
           icon: 'success',
