@@ -75,7 +75,7 @@ const SidebarNav = ({ role }) => {
         }`}
       >
         {/* Header */}
-        <div className="p-6 text-2xl font-bold border-b border-gray-800 flex items-center justify-between shrink-0">
+        <div className="p-5 text-2xl font-bold border-b border-gray-800 flex items-center justify-between shrink-0">
           <span>S & D Admin</span>
           <button
             onClick={() => setIsOpen(false)}
@@ -86,13 +86,13 @@ const SidebarNav = ({ role }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className="flex-1 p-3 overflow-y-auto">
           {links.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-2 p-3 rounded-lg mb-2 transition ${
+              className={`flex items-center gap-1 p-3 rounded-lg mb-1 transition ${
                 location.pathname === link.path
                   ? 'bg-green-600 text-white'
                   : 'hover:bg-gray-800 text-gray-300'
