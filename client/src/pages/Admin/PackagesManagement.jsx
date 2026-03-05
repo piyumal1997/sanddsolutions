@@ -42,28 +42,27 @@ const PackagesManagement = () => {
         protectedFetch(`${API_BASE}/api/inverter-capacities`),
       ]);
 
-      // Handle each response safely
       const pkgData = await pkgRes.json();
-      setPackages(pkgData.success ? (pkgData.data || []) : []);
+      setPackages(pkgData.success ? pkgData.data || [] : []);
 
       const pbData = await pbRes.json();
-      setPanelBrands(pbData.success ? (pbData.data || []) : []);
+      setPanelBrands(pbData.success ? pbData.data || [] : []);
 
       const pcData = await pcRes.json();
-      setPanelCapacities(pcData.success ? (pcData.data || []) : []);
+      setPanelCapacities(pcData.success ? pcData.data || [] : []);
 
       const ibData = await ibRes.json();
-      setInverterBrands(ibData.success ? (ibData.data || []) : []);
+      setInverterBrands(ibData.success ? ibData.data || [] : []);
 
       const icData = await icRes.json();
-      setInverterCapacities(icData.success ? (icData.data || []) : []);
+      setInverterCapacities(icData.success ? icData.data || [] : []);
     } catch (err) {
       console.error('Failed to load packages data:', err);
-      setError('Failed to load data. Please try again.');
+      setError('Failed to load packages, brands, or capacities.');
       Swal.fire({
         icon: 'error',
         title: 'Load Error',
-        text: 'Could not load packages, brands, or capacities. Check your connection or server.',
+        text: 'Could not load data. Check your connection or server.',
       });
     } finally {
       setLoading(false);
@@ -72,8 +71,10 @@ const PackagesManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.panel_brand_id || !form.panel_capacity_id || !form.panel_count ||
-        !form.inverter_brand_id || !form.inverter_capacity_id || !form.full_price_lkr) {
+
+    if (!form.name.trim() || !form.panel_brand_id || !form.panel_capacity_id ||
+        !form.panel_count || !form.inverter_brand_id || !form.inverter_capacity_id ||
+        !form.full_price_lkr) {
       Swal.fire('Error', 'All required fields must be filled', 'error');
       return;
     }
@@ -94,11 +95,21 @@ const PackagesManagement = () => {
         throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
       }
 
-      Swal.fire('Success', editing ? 'Package updated' : 'Package created', 'success');
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: editing ? 'Package updated successfully' : 'Package created successfully',
+        timer: 2000,
+      });
+
       loadAllData();
       resetForm();
     } catch (err) {
-      Swal.fire('Error', err.message || 'Failed to save package', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Failed to save package',
+      });
     }
   };
 
@@ -113,6 +124,20 @@ const PackagesManagement = () => {
       inverter_capacity_id: '',
       full_price_lkr: '',
       description: '',
+    });
+  };
+
+  const handleEdit = (pkg) => {
+    setEditing(pkg);
+    setForm({
+      name: pkg.name || '',
+      panel_brand_id: pkg.panel_brand_id || '',
+      panel_capacity_id: pkg.panel_capacity_id || '',
+      panel_count: pkg.panel_count || '',
+      inverter_brand_id: pkg.inverter_brand_id || '',
+      inverter_capacity_id: pkg.inverter_capacity_id || '',
+      full_price_lkr: pkg.full_price_lkr || '',
+      description: pkg.description || '',
     });
   };
 
@@ -135,10 +160,20 @@ const PackagesManagement = () => {
 
       if (!res.ok) throw new Error('Failed to deactivate');
 
-      Swal.fire('Success', 'Package deactivated', 'success');
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Package deactivated',
+        timer: 2000,
+      });
+
       loadAllData();
     } catch (err) {
-      Swal.fire('Error', err.message || 'Failed to deactivate package', 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'Failed to deactivate package',
+      });
     }
   };
 
@@ -182,8 +217,9 @@ const PackagesManagement = () => {
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="col-span-1 md:col-span-2 lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
             <input
-              placeholder="Package Name *"
+              placeholder="e.g. 5kW Residential Solar Package"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -191,89 +227,110 @@ const PackagesManagement = () => {
             />
           </div>
 
-          <select
-            value={form.panel_brand_id}
-            onChange={(e) => setForm({ ...form, panel_brand_id: e.target.value })}
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="">Select Panel Brand *</option>
-            {panelBrands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name} {b.country ? `(${b.country})` : ''}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Panel Brand *</label>
+            <select
+              value={form.panel_brand_id}
+              onChange={(e) => setForm({ ...form, panel_brand_id: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="">Select Panel Brand</option>
+              {panelBrands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} {b.country ? `(${b.country})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={form.panel_capacity_id}
-            onChange={(e) => setForm({ ...form, panel_capacity_id: e.target.value })}
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="">Select Panel Capacity (W) *</option>
-            {panelCapacities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.wattage}W {c.description ? `(${c.description})` : ''}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Panel Capacity (W) *</label>
+            <select
+              value={form.panel_capacity_id}
+              onChange={(e) => setForm({ ...form, panel_capacity_id: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="">Select Panel Wattage</option>
+              {panelCapacities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.wattage}W {c.description ? `(${c.description})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <input
-            type="number"
-            placeholder="Number of Panels *"
-            value={form.panel_count}
-            onChange={(e) => setForm({ ...form, panel_count: e.target.value })}
-            min="1"
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Panels *</label>
+            <input
+              type="number"
+              placeholder="e.g. 10"
+              value={form.panel_count}
+              onChange={(e) => setForm({ ...form, panel_count: e.target.value })}
+              min="1"
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
+            />
+          </div>
 
-          <select
-            value={form.inverter_brand_id}
-            onChange={(e) => setForm({ ...form, inverter_brand_id: e.target.value })}
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="">Select Inverter Brand *</option>
-            {inverterBrands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name} {b.country ? `(${b.country})` : ''}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Inverter Brand *</label>
+            <select
+              value={form.inverter_brand_id}
+              onChange={(e) => setForm({ ...form, inverter_brand_id: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="">Select Inverter Brand</option>
+              {inverterBrands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} {b.country ? `(${b.country})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={form.inverter_capacity_id}
-            onChange={(e) => setForm({ ...form, inverter_capacity_id: e.target.value })}
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
-          >
-            <option value="">Select Inverter Capacity *</option>
-            {inverterCapacities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.capacity_kw} kW - {c.type} {c.description ? `(${c.description})` : ''}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Inverter Capacity *</label>
+            <select
+              value={form.inverter_capacity_id}
+              onChange={(e) => setForm({ ...form, inverter_capacity_id: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="">Select Inverter Capacity</option>
+              {inverterCapacities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.capacity_kw} kW - {c.type} {c.description ? `(${c.description})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Full Price (LKR) *"
-            value={form.full_price_lkr}
-            onChange={(e) => setForm({ ...form, full_price_lkr: e.target.value })}
-            required
-            className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Price (LKR) *</label>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="e.g. 850000"
+              value={form.full_price_lkr}
+              onChange={(e) => setForm({ ...form, full_price_lkr: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
+            />
+          </div>
 
-          <textarea
-            placeholder="Package Description (optional)"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={4}
-            className="md:col-span-2 lg:col-span-3 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
-          />
+          <div className="md:col-span-2 lg:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Package Description (optional)</label>
+            <textarea
+              placeholder="e.g. Includes installation, warranty, and monitoring"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={4}
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
+            />
+          </div>
 
           <div className="md:col-span-2 lg:col-span-3 flex gap-6 mt-8">
             <button
@@ -296,53 +353,75 @@ const PackagesManagement = () => {
         </form>
       </div>
 
-      {/* Packages List */}
+      {/* Packages Table */}
       <h2 className="text-3xl font-bold mb-8 text-gray-900">
         All Solar Packages ({packages.length})
       </h2>
 
       {packages.length === 0 ? (
-        <p className="text-center text-xl text-gray-600 py-12">
-          No packages added yet.
-        </p>
+        <div className="bg-white p-10 rounded-2xl shadow text-center text-gray-600">
+          <p className="text-xl">No solar packages added yet.</p>
+          <p className="mt-2">Add your first package using the form above.</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {packages.map((pkg) => (
-            <div
-              key={pkg.id}
-              className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition duration-300"
-            >
-              <h3 className="text-2xl font-bold mb-3 text-gray-900">{pkg.name}</h3>
-              <p className="text-xl font-semibold text-green-700 mb-4">
-                LKR {Number(pkg.full_price_lkr).toLocaleString()}
-              </p>
-              <div className="text-gray-600 space-y-2 mb-6">
-                <p>
-                  Panels: {pkg.panel_count} × {pkg.panel_wattage || '?'}W (
-                  {panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || 'Unknown'})
-                </p>
-                <p>
-                  Inverter: {pkg.inverter_capacity_kw || '?'} kW {pkg.inverter_type || ''} (
-                  {inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || 'Unknown'})
-                </p>
-                {pkg.description && <p className="text-sm italic">{pkg.description}</p>}
-              </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setEditing(pkg)}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(pkg.id)}
-                  className="flex-1 bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition font-medium"
-                >
-                  Deactivate
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-xl">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Price (LKR)</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Panels</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Inverter</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {packages.map((pkg) => (
+                <tr key={pkg.id} className="hover:bg-gray-50 transition">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pkg.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{pkg.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                    {Number(pkg.full_price_lkr).toLocaleString()} LKR
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {pkg.panel_count} × {pkg.panel_wattage || '?'}W
+                    <br />
+                    <small>{panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || 'Unknown'}</small>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {pkg.inverter_capacity_kw || '?'} kW {pkg.inverter_type || ''}
+                    <br />
+                    <small>{inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || 'Unknown'}</small>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {pkg.description ? (
+                      <span title={pkg.description} className="line-clamp-2">
+                        {pkg.description}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">No description</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(pkg)}
+                      className="text-blue-600 hover:text-blue-800 mr-4 transition"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(pkg.id)}
+                      className="text-red-600 hover:text-red-800 transition"
+                    >
+                      Deactivate
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
