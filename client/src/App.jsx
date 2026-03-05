@@ -40,8 +40,7 @@ const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
 const ProjectsManagement = lazy(() => import("./pages/Admin/ProjectsManagement"));
 const UsersManagement = lazy(() => import("./pages/Admin/UsersManagement"));
 const PackagesManagement = lazy(() => import("./pages/Admin/PackagesManagement"));
-const PanelBrandsManagement = lazy(() => import("./pages/Admin/PanelBrandsManagement"));
-const InverterBrandsManagement = lazy(() => import("./pages/Admin/InverterBrandsManagement"));
+const BrandsManagement = lazy(() => import("./pages/Admin/BrandsManagement"));
 const CapacitiesManagement = lazy(() => import("./pages/Admin/CapacitiesManagement"));
 
 // In your App.jsx or wherever AdminLayout is defined
@@ -132,8 +131,7 @@ const router = createBrowserRouter([
           { path: "/admin/projects", element: <ProjectsManagement /> },
           { path: "/admin/users", element: <UsersManagement /> },
           { path: "/admin/packages", element: <PackagesManagement /> },
-          { path: "/admin/panel-brands", element: <PanelBrandsManagement /> },
-          { path: "/admin/inverter-brands", element: <InverterBrandsManagement /> },
+          { path: "/admin/brands", element: <BrandsManagement /> },
           { path: "/admin/capacities", element: <CapacitiesManagement /> },
           { path: "/admin/*", element: <Navigate to="/admin/dashboard" replace /> },
         ],

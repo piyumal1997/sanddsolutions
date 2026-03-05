@@ -24,8 +24,7 @@ const SidebarNav = ({ role }) => {
     { path: '/admin/dashboard', label: 'Dashboard', icon: faHome },
     { path: '/admin/projects', label: 'Projects', icon: faSun },
     { path: '/admin/packages', label: 'Solar Packages', icon: faBox },
-    { path: '/admin/panel-brands', label: 'Panel Brands', icon: faBatteryFull },
-    { path: '/admin/inverter-brands', label: 'Inverter Brands', icon: faBolt },
+    { path: '/admin/brands', label: 'Brands', icon: faBatteryFull },
     { path: '/admin/capacities', label: 'Capacities', icon: faBolt },
   ];
 
@@ -91,7 +90,7 @@ const SidebarNav = ({ role }) => {
               key={link.path}
               to={link.path}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 p-4 rounded-lg mb-2 transition ${
+              className={`flex items-center gap-2 p-3 rounded-lg mb-2 transition ${
                 location.pathname === link.path
                   ? 'bg-green-600 text-white'
                   : 'hover:bg-gray-800 text-gray-300'
