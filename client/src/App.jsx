@@ -66,7 +66,7 @@ const AdminLayout = () => {
       <SidebarNav role={user.role} />
 
       {/* Main content – fills full height, no left gap on desktop */}
-      <div className="flex-1 flex flex-col lg:ml-64">
+      <div className="flex-1 flex flex-col lg:ml-0">
         <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
           <Suspense fallback={<LoadingSpinner />}>
             <Outlet />

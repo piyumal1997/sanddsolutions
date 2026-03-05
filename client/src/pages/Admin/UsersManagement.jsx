@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { protectedFetch } from '../../utils/auth';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
+
 const UsersManagement = () => {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({
