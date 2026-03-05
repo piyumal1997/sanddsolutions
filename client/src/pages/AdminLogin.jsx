@@ -1,7 +1,7 @@
 // src/pages/AdminLogin.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -10,7 +10,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,9 +40,9 @@ const AdminLogin = () => {
         });
         setIsRegistering(false);
       } else {
-        localStorage.setItem('adminToken', data.token);
+        // Use context login → updates global state
+        login(data.token);
 
-        // Show success message
         await Swal.fire({
           icon: 'success',
           title: 'Logged In',
@@ -50,16 +50,12 @@ const AdminLogin = () => {
           timer: 1200,
           showConfirmButton: false,
         });
-
-        // Force redirect + reload to ensure protection re-evaluates
-        navigate('/admin/dashboard', { replace: true });
-        window.location.reload(); // ← This forces full re-evaluation of auth state
       }
     } catch (err) {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Something went wrong. Please try again.',
+        text: err.message || 'Something went wrong.',
       });
     } finally {
       setLoading(false);

@@ -3,9 +3,8 @@ import {
   createBrowserRouter,
   RouterProvider,
   Outlet,
-  ScrollRestoration,
-  useLocation,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import Header from "./components/common/Header";
@@ -13,13 +12,13 @@ import Footer from "./components/common/Footer";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import SidebarNav from "./components/common/SidebarNav";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import {
-  isAuthenticated,
   setupActivityListeners,
   resetInactivityTimer,
 } from "./utils/auth";
-import { AuthProvider } from "./context/AuthContext";
 
+// Public pages (lazy loaded)
 const Home = lazy(() => import("./pages/Home"));
 const Solutions = lazy(() => import("./pages/Solutions"));
 const SolarEnergy = lazy(() => import("./pages/SolarEnergy"));
@@ -30,46 +29,57 @@ const Engineering = lazy(() => import("./pages/Engineering"));
 const Projects = lazy(() => import("./pages/Projects"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Admin = lazy(() => import("./pages/AdminDashboard"));
 const SolarCalculatorPage = lazy(() => import("./pages/SolarCalculatorPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 
 // Admin pages
-const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
-const ProjectsManagement = lazy(
-  () => import("./pages/Admin/ProjectsManagement"),
-);
-const UsersManagement = lazy(() => import("./pages/Admin/UsersManagement"));
-const PackagesManagement = lazy(
-  () => import("./pages/Admin/PackagesManagement"),
-);
-const PanelBrandsManagement = lazy(
-  () => import("./pages/Admin/PanelBrandsManagement"),
-);
-const InverterBrandsManagement = lazy(
-  () => import("./pages/Admin/InverterBrandsManagement"),
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const ProjectsManagement = lazy(() => import("./pages/admin/ProjectsManagement"));
+const UsersManagement = lazy(() => import("./pages/admin/UsersManagement"));
+const PackagesManagement = lazy(() => import("./pages/admin/PackagesManagement"));
+const PanelBrandsManagement = lazy(() => import("./pages/admin/PanelBrandsManagement"));
+const InverterBrandsManagement = lazy(() => import("./pages/admin/InverterBrandsManagement"));
+
+const PublicLayout = () => (
+  <ErrorBoundary>
+    <Header />
+    <main className="pt-[var(--total-header-height)]">
+      <Suspense fallback={<LoadingSpinner />}>
+        <Outlet />
+        <ScrollRestoration
+          getKey={(location) => location.pathname + location.search}
+        />
+      </Suspense>
+    </main>
+    <Footer />
+  </ErrorBoundary>
 );
 
 const AdminLayout = () => {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (user) {
       const cleanup = setupActivityListeners();
       resetInactivityTimer();
       return cleanup;
     }
-  }, []);
+  }, [user]);
 
-  if (!isAuthenticated()) {
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
     return <Navigate to="/admin" replace />;
   }
 
   return (
-    <div className="flex min-h-screen">
-      <SidebarNav />
-      <main className="flex-1 ml-64 bg-gray-50 p-8">
+    <div className="flex min-h-screen bg-gray-50">
+      <SidebarNav role={user.role} />
+      <main className="flex-1 ml-64 p-6 lg:p-10">
         <Suspense fallback={<LoadingSpinner />}>
           <Outlet />
         </Suspense>
@@ -78,26 +88,9 @@ const AdminLayout = () => {
   );
 };
 
-const Layout = () => (
-  <ErrorBoundary>
-    <AuthProvider>
-      <Header />
-      <main className="pt-[var(--total-header-height)]">
-        <Suspense fallback={<LoadingSpinner />}>
-          <Outlet />
-          <ScrollRestoration
-            getKey={(location) => location.pathname + location.search}
-          />
-        </Suspense>
-      </main>
-      <Footer />
-    </AuthProvider>
-  </ErrorBoundary>
-);
-
 const router = createBrowserRouter([
   {
-    element: <Layout />,
+    element: <PublicLayout />,
     children: [
       { path: "/", element: <Home /> },
       { path: "/solutions", element: <Solutions /> },
@@ -109,8 +102,8 @@ const router = createBrowserRouter([
       { path: "/projects", element: <Projects /> },
       { path: "/about", element: <About /> },
       { path: "/contact", element: <Contact /> },
-      { path: "/admin", element: <AdminLogin /> },
       { path: "/solar-calculator", element: <SolarCalculatorPage /> },
+      { path: "/admin", element: <AdminLogin /> },
       { path: "*", element: <NotFound /> },
     ],
   },
@@ -130,7 +123,9 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <RouterProvider router={router} fallbackElement={<LoadingSpinner />} />
+    <AuthProvider>
+      <RouterProvider router={router} fallbackElement={<LoadingSpinner />} />
+    </AuthProvider>
   );
 }
 
