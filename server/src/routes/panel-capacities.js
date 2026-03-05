@@ -5,9 +5,6 @@ import Joi from 'joi';
 
 const router = express.Router();
 
-router.use(protect);
-router.use(restrictTo('admin', 'manager'));
-
 const capacitySchema = Joi.object({
   wattage: Joi.number().integer().min(100).max(1000).required().messages({
     'number.base': 'Wattage must be a number',
@@ -19,7 +16,7 @@ const capacitySchema = Joi.object({
   is_active: Joi.number().valid(0, 1).default(1),
 });
 
-// GET all panel capacities (active only by default)
+// 1. PUBLIC ROUTE: GET all panel capacities
 router.get('/', async (req, res) => {
   try {
     const showInactive = req.query.showInactive === 'true';
@@ -32,14 +29,20 @@ router.get('/', async (req, res) => {
        ORDER BY wattage ASC`
     );
 
-    res.json({ success: true, data: rows });
+    res.json({ success: true, data: rows }); // Returns 200 OK
   } catch (err) {
     console.error('GET /panel-capacities error:', err.message);
     res.status(500).json({ success: false, message: 'Failed to load panel capacities' });
   }
 });
 
-// POST create new panel capacity
+// ----------------------------------------------------
+// PROTECT ALL ROUTES BELOW THIS LINE
+// ----------------------------------------------------
+router.use(protect);
+router.use(restrictTo('admin', 'manager'));
+
+// 2. PROTECTED ROUTE: POST create new panel capacity
 router.post('/', async (req, res) => {
   const { error } = capacitySchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
@@ -72,7 +75,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update panel capacity
+// 3. PROTECTED ROUTE: PUT update panel capacity
 router.put('/:id', async (req, res) => {
   const { error } = capacitySchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
@@ -99,7 +102,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE = soft delete
+// 4. PROTECTED ROUTE: DELETE = soft delete
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
