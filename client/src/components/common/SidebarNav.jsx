@@ -50,7 +50,7 @@ const SidebarNav = ({ role }) => {
 
   return (
     <>
-      {/* Mobile Hamburger Button */}
+      {/* Mobile Hamburger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-gray-900 text-white rounded-full shadow-lg focus:outline-none"
@@ -66,14 +66,14 @@ const SidebarNav = ({ role }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar – full height, no extra bottom space */}
       <aside
         className={`w-64 bg-gray-900 text-white fixed inset-y-0 left-0 z-50 flex flex-col transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:relative lg:translate-x-0`}
       >
         {/* Header */}
-        <div className="p-6 text-2xl font-bold border-b border-gray-800 flex items-center justify-between">
+        <div className="p-6 text-2xl font-bold border-b border-gray-800 flex items-center justify-between shrink-0">
           <span>S & D Admin</span>
           <button
             onClick={() => setIsOpen(false)}
@@ -83,7 +83,7 @@ const SidebarNav = ({ role }) => {
           </button>
         </div>
 
-        {/* Navigation Links */}
+        {/* Navigation – fills space */}
         <nav className="flex-1 p-4 overflow-y-auto">
           {links.map((link) => (
             <Link
@@ -102,8 +102,8 @@ const SidebarNav = ({ role }) => {
           ))}
         </nav>
 
-        {/* Logout Button – pushed to bottom with mt-auto */}
-        <div className="p-4 border-t border-gray-800 mt-auto">
+        {/* Logout – pushed to bottom with mt-auto, no extra space */}
+        <div className="p-4 border-t border-gray-800 mt-auto shrink-0">
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full p-4 rounded-lg text-red-400 hover:bg-gray-800 hover:text-red-300 transition"

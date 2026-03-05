@@ -44,6 +44,7 @@ const PanelBrandsManagement = lazy(() => import("./pages/Admin/PanelBrandsManage
 const InverterBrandsManagement = lazy(() => import("./pages/Admin/InverterBrandsManagement"));
 
 // In your App.jsx or wherever AdminLayout is defined
+// In App.jsx – replace your AdminLayout with this
 const AdminLayout = () => {
   const { user, loading } = useAuth();
 
@@ -64,7 +65,7 @@ const AdminLayout = () => {
       {/* Sidebar */}
       <SidebarNav role={user.role} />
 
-      {/* Main content – fills remaining space, no gap */}
+      {/* Main content – fills full height, no left gap on desktop */}
       <div className="flex-1 flex flex-col lg:ml-64">
         <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
           <Suspense fallback={<LoadingSpinner />}>

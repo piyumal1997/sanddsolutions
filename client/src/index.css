@@ -12,3 +12,16 @@
 .animate-horizontal-scroll:hover {
   animation-play-state: paused; /* Optional: Pause on hover */
 }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
