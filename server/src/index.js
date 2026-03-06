@@ -42,6 +42,19 @@ app.use(
   }),
 );
 
+const fs = require('fs');
+const logFile = fs.createWriteStream('server-errors.log', { flags: 'a' });
+
+console.log = (...args) => {
+  logFile.write(`${new Date().toISOString()} [LOG] ${args.join(' ')}\n`);
+  process.stdout.write(args.join(' ') + '\n');
+};
+
+console.error = (...args) => {
+  logFile.write(`${new Date().toISOString()} [ERROR] ${args.join(' ')}\n`);
+  process.stderr.write(args.join(' ') + '\n');
+};
+
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
   console.log(
