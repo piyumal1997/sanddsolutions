@@ -150,30 +150,32 @@ router.use(restrictTo("admin", "manager"));
 // });
 
 router.post("/", upload.array("images", 10), async (req, res) => {
+  // Step 1: Log EVERYTHING that comes in
+  console.log('[PROJECT POST] Headers:', req.headers.authorization ? 'Auth present' : 'NO AUTH');
+  console.log('[PROJECT POST] Body:', req.body);
+  console.log('[PROJECT POST] Files count:', req.files?.length || 0);
+  console.log('[PROJECT POST] User object:', req.user ? 'present' : 'MISSING', req.user?.id || '(no id)');
+
   const { error } = projectSchema.validate(req.body);
   if (error) {
+    console.warn('[PROJECT POST] Joi validation failed:', error.details);
     return res.status(400).json({ success: false, message: error.details[0].message });
   }
 
   try {
     const { title, description, type, date, details } = req.body;
     const files = req.files || [];
+    const imagePaths = files.map(f => `/uploads/${f.filename}`);
 
-    // Safe image paths – filter out invalid files
-    const imagePaths = files
-      .filter(f => f && f.filename)           // skip bad uploads
-      .map(f => `/uploads/${f.filename}`);
-
-    // Log exactly what we're trying to insert
-    const imagesJson = JSON.stringify(imagePaths);
-    console.log('[PROJECT CREATE] Images JSON length:', imagesJson.length);
-    console.log('[PROJECT CREATE] Images JSON preview:', imagesJson.substring(0, 200) + (imagesJson.length > 200 ? '...' : ''));
-
-    if (imagesJson.length > 65535) { // rough check for TEXT column limit
-      console.warn('[PROJECT CREATE] WARNING: images JSON too long – may be truncated or fail');
+    // Critical safety checks
+    if (!req.user?.id) {
+      console.error('[PROJECT POST] CRITICAL: req.user.id is missing!');
+      // Continue with NULL instead of crashing
     }
 
-    const createdBy = req.user?.id || null;
+    const imagesJson = JSON.stringify(imagePaths);
+    console.log('[PROJECT POST] Images JSON length:', imagesJson.length);
+    console.log('[PROJECT POST] Date received:', date);
 
     const [result] = await pool.query(
       `INSERT INTO projects 
@@ -183,12 +185,14 @@ router.post("/", upload.array("images", 10), async (req, res) => {
         title.trim(),
         description.trim(),
         type,
-        date,
+        date || null,               // ← safety
         details?.trim() || null,
-        imagesJson,               // safe string
-        createdBy,
+        imagesJson,
+        req.user?.id || null,
       ]
     );
+
+    console.log('[PROJECT POST] SUCCESS - Inserted ID:', result.insertId);
 
     res.status(201).json({
       success: true,
@@ -196,20 +200,23 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       data: { id: result.insertId },
     });
   } catch (err) {
-    console.error('[PROJECT CREATE] CRASH:', {
+    // Very detailed crash log
+    console.error('[PROJECT POST] CRASHED:', {
       message: err.message,
-      code: err.code,               // e.g. ER_DATA_TOO_LONG, ER_TRUNCATED_WRONG_VALUE
+      code: err.code,
       sqlMessage: err.sqlMessage,
-      sql: err.sql ? err.sql.substring(0, 300) + '...' : null,
+      sql: err.sql ? err.sql.substring(0, 500) : null,
+      stack: err.stack?.substring(0, 500),
       body: req.body,
       fileCount: req.files?.length || 0,
       userPresent: !!req.user,
+      userId: req.user?.id || 'none',
     });
 
     res.status(500).json({
       success: false,
       message: "Failed to create project",
-      error: err.message,
+      error: err.message || 'Internal server error',
     });
   }
 });
