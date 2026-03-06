@@ -73,52 +73,29 @@ export const setupActivityListeners = () => {
   };
 };
 
-// Safe protected fetch
-// export const protectedFetch = async (url, options = {}) => {
-//   const token = getToken();
-
-//   if (!token) {
-//     logout('No active session');
-//     throw new Error('No authentication token');
-//   }
-
-//   const headers = {
-//     'Authorization': `Bearer ${token}`,
-//     'Content-Type': 'application/json',
-//     ...options.headers,
-//   };
-
-//   const response = await fetch(url, { ...options, headers });
-
-//   if (response.status === 401) {
-//     logout('Session expired or invalid');
-//     throw new Error('Unauthorized - session expired');
-//   }
-
-//   return response;
-// };
-
 // src/utils/auth.js
-
 export const protectedFetch = async (url, options = {}) => {
-  const token = localStorage.getItem('token'); 
-  
+  const token = localStorage.getItem('token'); // Double-check this key name matches your login logic
+
+  if (!token) {
+    //Redirect to login if no token exists
+    globalThis.location.href = '/login';
+    return;
+  }
+
   const headers = {
-    Authorization: `Bearer ${token}`,
     ...options.headers,
+    'Authorization': `Bearer ${token}`, // Must follow the "Bearer <token>" format
   };
 
-  // Crucial Fix: Remove Content-Type if we are sending FormData
+  // Ensure we don't break FormData as discussed previously
   if (options.body && options.body instanceof FormData) {
-    delete headers['Content-Type']; 
+    delete headers['Content-Type'];
   } else if (!headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+  return fetch(url, { ...options, headers });
 };
 
 // Get user from token (safe, no crash)
