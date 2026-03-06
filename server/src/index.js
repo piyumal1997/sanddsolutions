@@ -137,7 +137,7 @@ app.use("/api/inverter-capacities", jsonParser, inverterCapacityRoutes);
 app.use("/api/batteries", jsonParser, batteriesRouter);
 
 // File upload routes (multer) – do NOT use jsonParser here
-app.use("/api/projects", express.urlencoded({ extended: true, limit: "10mb" }), projectRoutes);
+app.use("/api/projects", projectRoutes);
 
 // Fallback JSON parser for any missed JSON routes
 app.use(jsonParser);
