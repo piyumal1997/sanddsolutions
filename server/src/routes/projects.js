@@ -41,23 +41,17 @@ const projectSchema = Joi.object({
   title: Joi.string().min(3).required(),
   description: Joi.string().min(10).required(),
   type: Joi.string()
-    .valid(
-      "residential-solar",
-      "industrial-solar",
-      "automation",
-      "engineering",
-      "cooling solution",
-    )
+    .valid("residential-solar", "industrial-solar", "automation", "engineering", "cooling solution")
     .required(),
   date: Joi.date().required(),
   details: Joi.string().allow(""),
   existingImages: Joi.string().allow(""),
 });
 
+// GET all projects (public endpoint)
 router.get("/", async (req, res) => {
   try {
-    let query =
-      "SELECT id, title, description, type, date, details, images FROM projects WHERE 1=1";
+    let query = "SELECT id, title, description, type, date, details, images FROM projects WHERE 1=1";
     const params = [];
 
     if (req.query.type && req.query.type !== "all") {
@@ -75,107 +69,59 @@ router.get("/", async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
-    const baseUrl =
-      process.env.NODE_ENV === "production"
-        ? "https://sanddsolutions.lk"
-        : "http://localhost:3000";
+    const baseUrl = process.env.NODE_ENV === "production"
+      ? "https://sanddsolutions.lk"
+      : "http://localhost:3000";
 
     const projects = rows.map((p) => ({
       ...p,
       images: p.images
         ? JSON.parse(p.images).map((img) =>
-            img.startsWith("http") ? img : `${baseUrl}${img}`,
+            img.startsWith("http") ? img : `${baseUrl}${img}`
           )
         : [],
     }));
 
     res.json({ success: true, data: projects });
   } catch (err) {
-    console.error("GET /projects error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to fetch projects",
-        error: err.message,
-      });
+    console.error("GET /projects error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch projects",
+      error: err.message,
+    });
   }
 });
 
+// Protected routes (admin/manager only)
 router.use(protect);
 router.use(restrictTo("admin", "manager"));
 
-// router.post("/", upload.array("images", 10), async (req, res) => {
-//   const { error } = projectSchema.validate(req.body);
-//   if (error)
-//     return res
-//       .status(400)
-//       .json({ success: false, message: error.details[0].message });
-
-//   try {
-//     const { title, description, type, date, details } = req.body;
-//     const files = req.files || [];
-//     const imagePaths = files.map((f) => `/uploads/${f.filename}`);
-
-//     const [result] = await pool.query(
-//       `INSERT INTO projects 
-//        (title, description, type, date, details, images, created_by, created_at)
-//        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-//       [
-//         title.trim(),
-//         description.trim(),
-//         type,
-//         date,
-//         details?.trim() || null,
-//         JSON.stringify(imagePaths),
-//         req.user.id,
-//       ],
-//     );
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Project created successfully",
-//       data: { id: result.insertId },
-//     });
-//   } catch (err) {
-//     console.error("POST /projects error:", err);
-//     res
-//       .status(500)
-//       .json({
-//         success: false,
-//         message: "Failed to create project",
-//         error: err.message,
-//       });
-//   }
-// });
-
+// POST create new project
 router.post("/", upload.array("images", 10), async (req, res) => {
-  // Step 1: Log EVERYTHING that comes in
-  console.log('[PROJECT POST] Headers:', req.headers.authorization ? 'Auth present' : 'NO AUTH');
-  console.log('[PROJECT POST] Body:', req.body);
-  console.log('[PROJECT POST] Files count:', req.files?.length || 0);
-  console.log('[PROJECT POST] User object:', req.user ? 'present' : 'MISSING', req.user?.id || '(no id)');
+  console.log('[PROJECT POST] Request received:', {
+    body: req.body,
+    filesCount: req.files?.length || 0,
+    userId: req.user?.id || 'MISSING',
+  });
 
   const { error } = projectSchema.validate(req.body);
   if (error) {
-    console.warn('[PROJECT POST] Joi validation failed:', error.details);
-    return res.status(400).json({ success: false, message: error.details[0].message });
+    console.warn('[PROJECT POST] Validation failed:', error.details);
+    return res.status(400).json({
+      success: false,
+      message: error.details[0].message,
+    });
   }
 
   try {
     const { title, description, type, date, details } = req.body;
     const files = req.files || [];
-    const imagePaths = files.map(f => `/uploads/${f.filename}`);
-
-    // Critical safety checks
-    if (!req.user?.id) {
-      console.error('[PROJECT POST] CRITICAL: req.user.id is missing!');
-      // Continue with NULL instead of crashing
-    }
+    const imagePaths = files.map((f) => `/uploads/${f.filename}`);
 
     const imagesJson = JSON.stringify(imagePaths);
-    console.log('[PROJECT POST] Images JSON length:', imagesJson.length);
-    console.log('[PROJECT POST] Date received:', date);
+
+    const createdBy = req.user?.id || null;
 
     const [result] = await pool.query(
       `INSERT INTO projects 
@@ -185,14 +131,14 @@ router.post("/", upload.array("images", 10), async (req, res) => {
         title.trim(),
         description.trim(),
         type,
-        date || null,               // ← safety
+        date,
         details?.trim() || null,
         imagesJson,
-        req.user?.id || null,
+        createdBy,
       ]
     );
 
-    console.log('[PROJECT POST] SUCCESS - Inserted ID:', result.insertId);
+    console.log('[PROJECT POST] Success - ID:', result.insertId);
 
     res.status(201).json({
       success: true,
@@ -200,7 +146,6 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       data: { id: result.insertId },
     });
   } catch (err) {
-    // Very detailed crash log
     console.error('[PROJECT POST] CRASHED:', {
       message: err.message,
       code: err.code,
@@ -208,7 +153,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       sql: err.sql ? err.sql.substring(0, 500) : null,
       stack: err.stack?.substring(0, 500),
       body: req.body,
-      fileCount: req.files?.length || 0,
+      filesLength: req.files?.length || 0,
       userPresent: !!req.user,
       userId: req.user?.id || 'none',
     });
@@ -216,28 +161,29 @@ router.post("/", upload.array("images", 10), async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to create project",
-      error: err.message || 'Internal server error',
+      error: err.message || "Internal server error",
     });
   }
 });
 
+// PUT update project
 router.put("/:id", upload.array("images", 10), async (req, res) => {
   const { error } = projectSchema.validate(req.body);
-  if (error)
-    return res
-      .status(400)
-      .json({ success: false, message: error.details[0].message });
+  if (error) {
+    return res.status(400).json({ success: false, message: error.details[0].message });
+  }
 
   try {
     const { id } = req.params;
-    const { title, description, type, date, details, existingImages } =
-      req.body;
+    const { title, description, type, date, details, existingImages } = req.body;
 
     let images = [];
     if (existingImages) images = JSON.parse(existingImages);
 
     const files = req.files || [];
     images.push(...files.map((f) => `/uploads/${f.filename}`));
+
+    const imagesJson = JSON.stringify(images);
 
     const [result] = await pool.query(
       `UPDATE projects 
@@ -249,55 +195,54 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
         type,
         date,
         details?.trim() || null,
-        JSON.stringify(images),
+        imagesJson,
         id,
-      ],
+      ]
     );
 
     if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Project not found" });
+      return res.status(404).json({ success: false, message: "Project not found" });
     }
 
     res.json({ success: true, message: "Project updated successfully" });
   } catch (err) {
-    console.error("PUT /projects error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to update project",
-        error: err.message,
-      });
+    console.error("PUT /projects error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update project",
+      error: err.message,
+    });
   }
 });
 
+// DELETE – hard delete (permanent removal)
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
     const [result] = await pool.query(
-      "UPDATE projects SET is_active = 0, updated_at = NOW() WHERE id = ?",
-      [id],
+      'DELETE FROM projects WHERE id = ?',
+      [id]
     );
 
     if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Project not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
     }
 
-    res.json({ success: true, message: "Project deactivated successfully" });
+    res.json({
+      success: true,
+      message: "Project deleted successfully",
+    });
   } catch (err) {
-    console.error("DELETE /projects error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to deactivate project",
-        error: err.message,
-      });
+    console.error("DELETE /projects error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete project",
+      error: err.message,
+    });
   }
 });
 
