@@ -104,6 +104,10 @@ console.log('Server logging initialized → file:', logFilePath);
 // ERROR END HERE
 // ────────────────────────────────────────────────
 
+
+// IMPORTANT: Trust proxy (required for rate-limit + X-Forwarded-For in cPanel/hosting)
+app.set('trust proxy', 1);  // Trust first proxy (cPanel usually has 1 level)
+
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
   console.log(

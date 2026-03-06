@@ -99,15 +99,17 @@ router.use(restrictTo("admin", "manager"));
 
 // POST create new project
 router.post("/", upload.array("images", 10), async (req, res) => {
-  console.log('[PROJECT POST] Request received:', {
-    body: req.body,
-    filesCount: req.files?.length || 0,
-    userId: req.user?.id || 'MISSING',
-  });
+  // Quick logging (only in development)
+  if (process.env.NODE_ENV !== "production") {
+    console.log('[PROJECT POST] Request received:', {
+      body: req.body,
+      filesCount: req.files?.length || 0,
+      userId: req.user?.id || 'MISSING',
+    });
+  }
 
   const { error } = projectSchema.validate(req.body);
   if (error) {
-    console.warn('[PROJECT POST] Validation failed:', error.details);
     return res.status(400).json({
       success: false,
       message: error.details[0].message,
@@ -117,8 +119,16 @@ router.post("/", upload.array("images", 10), async (req, res) => {
   try {
     const { title, description, type, date, details } = req.body;
     const files = req.files || [];
-    const imagePaths = files.map((f) => `/uploads/${f.filename}`);
 
+    // Validate date format early
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return res.status(400).json({
+        success: false,
+        message: "Date must be in YYYY-MM-DD format",
+      });
+    }
+
+    const imagePaths = files.map((f) => `/uploads/${f.filename}`);
     const imagesJson = JSON.stringify(imagePaths);
 
     const createdBy = req.user?.id || null;
@@ -138,8 +148,6 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       ]
     );
 
-    console.log('[PROJECT POST] Success - ID:', result.insertId);
-
     res.status(201).json({
       success: true,
       message: "Project created successfully",
@@ -151,7 +159,6 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       code: err.code,
       sqlMessage: err.sqlMessage,
       sql: err.sql ? err.sql.substring(0, 500) : null,
-      stack: err.stack?.substring(0, 500),
       body: req.body,
       filesLength: req.files?.length || 0,
       userPresent: !!req.user,
@@ -178,7 +185,9 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
     const { title, description, type, date, details, existingImages } = req.body;
 
     let images = [];
-    if (existingImages) images = JSON.parse(existingImages);
+    if (existingImages) {
+      images = JSON.parse(existingImages);
+    }
 
     const files = req.files || [];
     images.push(...files.map((f) => `/uploads/${f.filename}`));
