@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 import fs from 'node:fs';
+import util from 'node:util';
 
 import auth from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
@@ -47,31 +48,61 @@ app.use(
 // FORCE FILE LOGGING (add this block here)
 // ────────────────────────────────────────────────
 
-const logFile = fs.createWriteStream(
-  path.join(__dirname, 'server-errors.log'), 
-  { flags: 'a' } // append mode
-);
+const logFilePath = path.join(__dirname, 'server-logs.txt');
+let logFile;
 
-// Override console.log and console.error to also write to file
+try {
+  logFile = fs.createWriteStream(logFilePath, { flags: 'a' });
+  console.log(`Logging to file: ${logFilePath}`);
+} catch (err) {
+  console.error('Failed to open log file:', err.message);
+}
+
+// Original console functions
 const originalLog = console.log;
 const originalError = console.error;
 
+// Helper to format any argument nicely
+function formatArg(arg) {
+  if (typeof arg === 'object' && arg !== null) {
+    // Use util.inspect for clean, readable object/array output
+    return util.inspect(arg, { depth: 4, colors: false });
+  }
+  return String(arg);
+}
+
+// Override console.log
 console.log = (...args) => {
   const timestamp = new Date().toISOString();
-  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg)).join(' ');
+  const messageParts = args.map(formatArg);
+  const message = messageParts.join(' ');
+
+  // Write to file (plain text)
   logFile.write(`[${timestamp}] [LOG] ${message}\n`);
-  originalLog(...args);
+
+  // Write to terminal with timestamp prefix (optional colors)
+  originalLog(`\x1b[36m[${timestamp}]\x1b[0m`, ...args);
 };
 
+// Override console.error
 console.error = (...args) => {
   const timestamp = new Date().toISOString();
-  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg)).join(' ');
+  const messageParts = args.map(formatArg);
+  const message = messageParts.join(' ');
+
+  // Write to file
   logFile.write(`[${timestamp}] [ERROR] ${message}\n`);
-  originalError(...args);
+
+  // Write to terminal in red
+  originalError(`\x1b[31m[${timestamp}] ERROR\x1b[0m`, ...args);
 };
 
-// Optional: log startup
-console.log('Server starting... PID:', process.pid);
+// Optional: log when server starts
+console.log('Server logging initialized → file:', logFilePath);
+
+// ────────────────────────────────────────────────
+// ERROR END HERE
+// ────────────────────────────────────────────────
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
