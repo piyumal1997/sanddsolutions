@@ -82,19 +82,22 @@ router.get("/", async (req, res) => {
 
     const baseUrl =
       process.env.NODE_ENV === "production"
-        ? "https://api.sanddsolutions.lk" // Ensure this matches your API domain
+        ? "https://api.sanddsolutions.lk"
         : "http://localhost:3000";
 
     const projects = rows.map((p) => {
       let parsedImages = [];
-      try {
-        // FAIL-SAFE: Handle null, empty strings, or invalid JSON
-        if (p.images && p.images.trim() !== "") {
+
+      // FIX: Since the DB column is type 'JSON', p.images might ALREADY be an array.
+      if (Array.isArray(p.images)) {
+        parsedImages = p.images;
+      } else if (typeof p.images === "string" && p.images.trim() !== "") {
+        try {
           parsedImages = JSON.parse(p.images);
+        } catch (e) {
+          console.error(`Failed to parse images string for project ${p.id}`);
+          parsedImages = [];
         }
-      } catch (e) {
-        console.error(`JSON Parse Error for project ${p.id}:`, e.message);
-        parsedImages = [];
       }
 
       return {
@@ -109,10 +112,15 @@ router.get("/", async (req, res) => {
 
     res.json({ success: true, data: projects });
   } catch (err) {
-    console.error("GET /projects error details:", err); // Log full error for debugging
+    // Check your terminal console to see exactly what this prints!
+    console.error("CRITICAL ERROR in GET /projects:", err);
     res
       .status(500)
-      .json({ success: false, message: "Failed to fetch projects" });
+      .json({
+        success: false,
+        message: "Failed to fetch projects",
+        error: err.message,
+      });
   }
 });
 
@@ -131,6 +139,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
     const { title, description, type, date, details } = req.body;
     const imagePaths = (req.files || []).map((f) => `/uploads/${f.filename}`);
 
+    // MySQL JSON columns accept JSON strings on INSERT
     const [result] = await pool.query(
       `INSERT INTO projects (title, description, type, date, details, images, created_by, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
