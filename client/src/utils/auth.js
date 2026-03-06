@@ -101,18 +101,14 @@ export const setupActivityListeners = () => {
 // src/utils/auth.js
 
 export const protectedFetch = async (url, options = {}) => {
-  // Get your auth token
-  const token = localStorage.getItem('token'); // Or however you store it
-
-  // Initialize headers
+  const token = localStorage.getItem('token'); 
+  
   const headers = {
     Authorization: `Bearer ${token}`,
     ...options.headers,
   };
 
-  // The crucial check: 
-  // If the body is FormData, let the browser set the Content-Type automatically.
-  // Otherwise, default to application/json.
+  // Crucial Fix: Remove Content-Type if we are sending FormData
   if (options.body && options.body instanceof FormData) {
     delete headers['Content-Type']; 
   } else if (!headers['Content-Type']) {
