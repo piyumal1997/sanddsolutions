@@ -119,7 +119,12 @@ app.use(
 );
 
 //File uploads – serve static files from uploads directory
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: (res, path) => {
+    res.set('Access-Control-Allow-Origin', '*'); // Allow cross-origin image loading
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 // Rate limiting – applied to all API routes
 const limiter = rateLimit({
