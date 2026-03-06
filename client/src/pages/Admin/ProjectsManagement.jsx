@@ -44,50 +44,69 @@ const ProjectsManagement = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = new FormData();
-      payload.append('title', form.title.trim());
-      payload.append('description', form.description.trim());
-      payload.append('type', form.type);
-      payload.append('date', form.date);
-      payload.append('details', form.details.trim());
+  e.preventDefault();
 
-      console.log('Submitting form with data:', {date: form.date, type: form.type, title: form.title});
+  // Frontend validation
+  if (!form.title.trim()) {
+    Swal.fire('Error', 'Title is required (minimum 3 characters)', 'error');
+    return;
+  }
+  if (!form.description.trim() || form.description.trim().length < 10) {
+    Swal.fire('Error', 'Description is required (minimum 10 characters)', 'error');
+    return;
+  }
+  if (!form.type) {
+    Swal.fire('Error', 'Project type is required', 'error');
+    return;
+  }
+  if (!form.date) {
+    Swal.fire('Error', 'Date is required', 'error');
+    return;
+  }
 
-      if (editing) {
-        payload.append('existingImages', JSON.stringify(editing.images || []));
-      }
+  try {
+    const payload = new FormData();
+    payload.append('title', form.title.trim());
+    payload.append('description', form.description.trim());
+    payload.append('type', form.type);
+    payload.append('date', form.date);
+    payload.append('details', form.details.trim());
 
-      files.forEach(file => payload.append('images', file));
+    console.log('Submitting with data:', Object.fromEntries(payload)); // debug
 
-      const url = editing ? `${API_BASE}/api/projects/${editing.id}` : `${API_BASE}/api/projects`;
-      const method = editing ? 'PUT' : 'POST';
-
-      const res = await protectedFetch(url, { method, body: payload });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
-      }
-
-      Swal.fire({
-        icon: 'success',
-        title: editing ? 'Updated' : 'Created',
-        text: `Project successfully ${editing ? 'updated' : 'added'}`,
-        timer: 2000,
-      });
-
-      loadProjects();
-      resetForm();
-    } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Operation Failed',
-        text: err.message,
-      });
+    if (editing) {
+      payload.append('existingImages', JSON.stringify(editing.images || []));
     }
-  };
+
+    files.forEach(file => payload.append('images', file));
+
+    const url = editing ? `${API_BASE}/api/projects/${editing.id}` : `${API_BASE}/api/projects`;
+    const method = editing ? 'PUT' : 'POST';
+
+    const res = await protectedFetch(url, { method, body: payload });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: editing ? 'Updated' : 'Created',
+      text: `Project successfully ${editing ? 'updated' : 'added'}`,
+      timer: 2000,
+    });
+
+    loadProjects();
+    resetForm();
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Operation Failed',
+      text: err.message,
+    });
+  }
+};
 
   const resetForm = () => {
     setEditing(null);
@@ -150,6 +169,7 @@ const ProjectsManagement = () => {
             placeholder="Project Title *"
             value={form.title}
             onChange={e => setForm({ ...form, title: e.target.value })}
+            minLength={3}
             required
             className="p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
@@ -179,6 +199,7 @@ const ProjectsManagement = () => {
             value={form.description}
             onChange={e => setForm({ ...form, description: e.target.value })}
             rows={4}
+            minLength={10}
             required
             className="md:col-span-2 p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
