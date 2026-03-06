@@ -75,20 +75,19 @@ export const setupActivityListeners = () => {
 
 // src/utils/auth.js
 export const protectedFetch = async (url, options = {}) => {
-  const token = localStorage.getItem('token'); // Double-check this key name matches your login logic
+  const token = getToken(); 
 
   if (!token) {
-    //Redirect to login if no token exists
-    window.location.href = '/login';
+    window.location.href = '/admin'; 
     return;
   }
 
   const headers = {
     ...options.headers,
-    'Authorization': `Bearer ${token}`, // Must follow the "Bearer <token>" format
+    'Authorization': `Bearer ${token}`,
   };
 
-  // Ensure we don't break FormData as discussed previously
+  // Keep this logic - it fixes the "title is required" issue!
   if (options.body && options.body instanceof FormData) {
     delete headers['Content-Type'];
   } else if (!headers['Content-Type']) {
