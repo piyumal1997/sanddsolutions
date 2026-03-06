@@ -118,6 +118,9 @@ app.use(
   }),
 );
 
+//File uploads – serve static files from uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Rate limiting – applied to all API routes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
