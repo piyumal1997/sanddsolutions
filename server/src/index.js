@@ -121,7 +121,8 @@ app.use("/api/", limiter);
 
 // JSON parser – only for JSON routes (prevents multipart crash)
 const jsonParser = express.json({ limit: "10mb" });
-const urlencodedParser = express.urlencoded({ extended: true, limit: "10mb" });
+// Parse urlencoded bodies (for multipart text fields + files)
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Apply JSON parser selectively to JSON-only routes
 app.use("/api/auth", jsonParser, auth);
@@ -136,7 +137,7 @@ app.use("/api/inverter-capacities", jsonParser, inverterCapacityRoutes);
 app.use("/api/batteries", jsonParser, batteriesRouter);
 
 // File upload routes (multer) – do NOT use jsonParser here
-app.use("/api/projects", projectRoutes);
+app.use("/api/projects", express.urlencoded({ extended: true, limit: "10mb" }), projectRoutes);
 
 // Fallback JSON parser for any missed JSON routes
 app.use(jsonParser);
