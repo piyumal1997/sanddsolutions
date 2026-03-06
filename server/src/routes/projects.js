@@ -158,18 +158,22 @@ router.post("/", upload.array("images", 10), async (req, res) => {
   try {
     const { title, description, type, date, details } = req.body;
     const files = req.files || [];
-    const imagePaths = files.map((f) => `/uploads/${f.filename}`);
 
-    // Safety check for created_by
-    const createdBy = req.user?.id || null; // fallback to NULL if no user
+    // Safe image paths – filter out invalid files
+    const imagePaths = files
+      .filter(f => f && f.filename)           // skip bad uploads
+      .map(f => `/uploads/${f.filename}`);
 
-    console.log('Creating project with data:', {
-      title,
-      type,
-      date,
-      createdBy,
-      imageCount: imagePaths.length,
-    });
+    // Log exactly what we're trying to insert
+    const imagesJson = JSON.stringify(imagePaths);
+    console.log('[PROJECT CREATE] Images JSON length:', imagesJson.length);
+    console.log('[PROJECT CREATE] Images JSON preview:', imagesJson.substring(0, 200) + (imagesJson.length > 200 ? '...' : ''));
+
+    if (imagesJson.length > 65535) { // rough check for TEXT column limit
+      console.warn('[PROJECT CREATE] WARNING: images JSON too long – may be truncated or fail');
+    }
+
+    const createdBy = req.user?.id || null;
 
     const [result] = await pool.query(
       `INSERT INTO projects 
@@ -179,9 +183,9 @@ router.post("/", upload.array("images", 10), async (req, res) => {
         title.trim(),
         description.trim(),
         type,
-        date,                  // make sure frontend sends YYYY-MM-DD
+        date,
         details?.trim() || null,
-        JSON.stringify(imagePaths),
+        imagesJson,               // safe string
         createdBy,
       ]
     );
@@ -192,11 +196,14 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       data: { id: result.insertId },
     });
   } catch (err) {
-    console.error('POST /projects FAILED:', {
+    console.error('[PROJECT CREATE] CRASH:', {
       message: err.message,
-      stack: err.stack,
+      code: err.code,               // e.g. ER_DATA_TOO_LONG, ER_TRUNCATED_WRONG_VALUE
+      sqlMessage: err.sqlMessage,
+      sql: err.sql ? err.sql.substring(0, 300) + '...' : null,
       body: req.body,
-      files: req.files?.length || 0,
+      fileCount: req.files?.length || 0,
+      userPresent: !!req.user,
     });
 
     res.status(500).json({

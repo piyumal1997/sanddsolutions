@@ -53,6 +53,8 @@ const ProjectsManagement = () => {
       payload.append('date', form.date);
       payload.append('details', form.details.trim());
 
+      console.log('Submitting form with data:', {date: form.date, type: form.type, title: form.title});
+
       if (editing) {
         payload.append('existingImages', JSON.stringify(editing.images || []));
       }
