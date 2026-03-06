@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
+import fs from 'node:fs';
 
 import auth from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
@@ -22,10 +23,29 @@ import batteriesRouter from './routes/batteries.js';
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+//CORS configuration - tightened for production, open for development
+app.use(
+  cors({
+    origin: [
+      "https://sanddsolutions.lk",
+      "https://www.sanddsolutions.lk",
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
 // ────────────────────────────────────────────────
 // FORCE FILE LOGGING (add this block here)
 // ────────────────────────────────────────────────
-import fs from 'node:fs';
 
 const logFile = fs.createWriteStream(
   path.join(__dirname, 'server-errors.log'), 
@@ -52,27 +72,6 @@ console.error = (...args) => {
 
 // Optional: log startup
 console.log('Server starting... PID:', process.pid);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-
-//CORS configuration - tightened for production, open for development
-app.use(
-  cors({
-    origin: [
-      "https://sanddsolutions.lk",
-      "https://www.sanddsolutions.lk",
-      "http://localhost:5173",
-      "http://localhost:3000",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
