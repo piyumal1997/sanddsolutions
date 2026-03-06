@@ -74,28 +74,55 @@ export const setupActivityListeners = () => {
 };
 
 // Safe protected fetch
+// export const protectedFetch = async (url, options = {}) => {
+//   const token = getToken();
+
+//   if (!token) {
+//     logout('No active session');
+//     throw new Error('No authentication token');
+//   }
+
+//   const headers = {
+//     'Authorization': `Bearer ${token}`,
+//     'Content-Type': 'application/json',
+//     ...options.headers,
+//   };
+
+//   const response = await fetch(url, { ...options, headers });
+
+//   if (response.status === 401) {
+//     logout('Session expired or invalid');
+//     throw new Error('Unauthorized - session expired');
+//   }
+
+//   return response;
+// };
+
+// src/utils/auth.js
+
 export const protectedFetch = async (url, options = {}) => {
-  const token = getToken();
+  // Get your auth token
+  const token = localStorage.getItem('token'); // Or however you store it
 
-  if (!token) {
-    logout('No active session');
-    throw new Error('No authentication token');
-  }
-
+  // Initialize headers
   const headers = {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
     ...options.headers,
   };
 
-  const response = await fetch(url, { ...options, headers });
-
-  if (response.status === 401) {
-    logout('Session expired or invalid');
-    throw new Error('Unauthorized - session expired');
+  // The crucial check: 
+  // If the body is FormData, let the browser set the Content-Type automatically.
+  // Otherwise, default to application/json.
+  if (options.body && options.body instanceof FormData) {
+    delete headers['Content-Type']; 
+  } else if (!headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
 
-  return response;
+  return fetch(url, {
+    ...options,
+    headers,
+  });
 };
 
 // Get user from token (safe, no crash)
