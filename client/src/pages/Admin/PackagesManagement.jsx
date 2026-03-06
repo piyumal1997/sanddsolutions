@@ -185,12 +185,12 @@ const PackagesManagement = () => {
 
   const handleDelete = async (id) => {
     const confirmed = await Swal.fire({
-      title: 'Deactivate Package?',
-      text: 'This will hide it from public view (soft delete). You can reactivate later.',
+      title: 'Delete Package?',
+      text: 'This will permanently remove the package from the system.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      confirmButtonText: 'Yes, deactivate',
+      confirmButtonText: 'Yes, delete',
     });
 
     if (!confirmed.isConfirmed) return;
@@ -200,12 +200,12 @@ const PackagesManagement = () => {
         method: 'DELETE',
       });
 
-      if (!res.ok) throw new Error('Failed to deactivate');
+      if (!res.ok) throw new Error('Failed to delete');
 
       Swal.fire({
         icon: 'success',
         title: 'Success',
-        text: 'Package deactivated',
+        text: 'Package deleted successfully',
         timer: 2000,
       });
 
@@ -214,7 +214,7 @@ const PackagesManagement = () => {
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: err.message || 'Failed to deactivate package',
+        text: err.message || 'Failed to delete package',
       });
     }
   };
@@ -514,7 +514,7 @@ const PackagesManagement = () => {
                       onClick={() => handleDelete(pkg.id)}
                       className="text-red-600 hover:text-red-800 transition"
                     >
-                      Deactivate
+                      Delete
                     </button>
                   </td>
                 </tr>

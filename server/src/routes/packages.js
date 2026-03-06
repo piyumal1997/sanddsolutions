@@ -45,7 +45,6 @@ router.get('/', async (req, res) => {
       LEFT JOIN inverter_brands ib ON p.inverter_brand_id = ib.id
       LEFT JOIN inverter_capacities ic ON p.inverter_capacity_id = ic.id
       LEFT JOIN solar_batteries sb ON p.battery_id = sb.id
-      WHERE p.is_active = 1
       ORDER BY p.created_at DESC
     `);
 
@@ -201,13 +200,13 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE – soft delete (set is_active = 0)
+// DELETE – hard delete (permanent removal)
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
     const [result] = await pool.query(
-      'UPDATE solar_packages SET is_active = 0, updated_at = NOW() WHERE id = ?',
+      'DELETE FROM solar_packages WHERE id = ?',
       [id]
     );
 
@@ -220,13 +219,13 @@ router.delete('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Package deactivated successfully',
+      message: 'Package deleted successfully',
     });
   } catch (err) {
     console.error('DELETE /packages error:', err.message);
     res.status(500).json({
       success: false,
-      message: 'Failed to deactivate package',
+      message: 'Failed to delete package',
       error: err.message,
     });
   }
