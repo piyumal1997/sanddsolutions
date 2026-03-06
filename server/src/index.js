@@ -29,6 +29,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ────────────────────────────────────────────────
+// 0. Ensure Upload Directory Exists
+// ────────────────────────────────────────────────
+const uploadDir = path.join(__dirname, "../../uploads"); // Match your multer path
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log(`Created missing directory: ${uploadDir}`);
+} else {
+  console.log(`Uploads directory verified: ${uploadDir}`);
+}
+
+// ────────────────────────────────────────────────
 // 1. Initialize Express app
 // ────────────────────────────────────────────────
 const app = express();
@@ -103,7 +115,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 // Rate limiting – applied to all API routes

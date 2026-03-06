@@ -22,6 +22,22 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      // Use process.cwd() to get the project root safely
+      const rootUploads = path.join(process.cwd(), "../uploads");
+
+      // Ensure it exists just in case
+      if (!fs.existsSync(rootUploads)) {
+        fs.mkdirSync(rootUploads, { recursive: true });
+      }
+      cb(null, rootUploads);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  }),
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
@@ -41,7 +57,13 @@ const projectSchema = Joi.object({
   title: Joi.string().min(3).required(),
   description: Joi.string().min(10).required(),
   type: Joi.string()
-    .valid("residential-solar", "industrial-solar", "automation", "engineering", "cooling solution")
+    .valid(
+      "residential-solar",
+      "industrial-solar",
+      "automation",
+      "engineering",
+      "cooling solution",
+    )
     .required(),
   date: Joi.date().required(),
   details: Joi.string().allow(""),
@@ -51,7 +73,8 @@ const projectSchema = Joi.object({
 // GET all projects (public endpoint)
 router.get("/", async (req, res) => {
   try {
-    let query = "SELECT id, title, description, type, date, details, images FROM projects WHERE 1=1";
+    let query =
+      "SELECT id, title, description, type, date, details, images FROM projects WHERE 1=1";
     const params = [];
 
     if (req.query.type && req.query.type !== "all") {
@@ -69,15 +92,16 @@ router.get("/", async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
-    const baseUrl = process.env.NODE_ENV === "production"
-      ? "https://sanddsolutions.lk"
-      : "http://localhost:3000";
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://sanddsolutions.lk"
+        : "http://localhost:3000";
 
     const projects = rows.map((p) => ({
       ...p,
       images: p.images
         ? JSON.parse(p.images).map((img) =>
-            img.startsWith("http") ? img : `${baseUrl}${img}`
+            img.startsWith("http") ? img : `${baseUrl}${img}`,
           )
         : [],
     }));
@@ -101,10 +125,10 @@ router.use(restrictTo("admin", "manager"));
 router.post("/", upload.array("images", 10), async (req, res) => {
   // Quick logging (only in development)
   if (process.env.NODE_ENV !== "production") {
-    console.log('[PROJECT POST] Request received:', {
+    console.log("[PROJECT POST] Request received:", {
       body: req.body,
       filesCount: req.files?.length || 0,
-      userId: req.user?.id || 'MISSING',
+      userId: req.user?.id || "MISSING",
     });
   }
 
@@ -145,7 +169,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
         details?.trim() || null,
         imagesJson,
         createdBy,
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -154,7 +178,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       data: { id: result.insertId },
     });
   } catch (err) {
-    console.error('[PROJECT POST] CRASHED:', {
+    console.error("[PROJECT POST] CRASHED:", {
       message: err.message,
       code: err.code,
       sqlMessage: err.sqlMessage,
@@ -162,7 +186,7 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       body: req.body,
       filesLength: req.files?.length || 0,
       userPresent: !!req.user,
-      userId: req.user?.id || 'none',
+      userId: req.user?.id || "none",
     });
 
     res.status(500).json({
@@ -177,12 +201,15 @@ router.post("/", upload.array("images", 10), async (req, res) => {
 router.put("/:id", upload.array("images", 10), async (req, res) => {
   const { error } = projectSchema.validate(req.body);
   if (error) {
-    return res.status(400).json({ success: false, message: error.details[0].message });
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
   }
 
   try {
     const { id } = req.params;
-    const { title, description, type, date, details, existingImages } = req.body;
+    const { title, description, type, date, details, existingImages } =
+      req.body;
 
     let images = [];
     if (existingImages) {
@@ -206,11 +233,13 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
         details?.trim() || null,
         imagesJson,
         id,
-      ]
+      ],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Project not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
     }
 
     res.json({ success: true, message: "Project updated successfully" });
@@ -229,10 +258,9 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [result] = await pool.query(
-      'DELETE FROM projects WHERE id = ?',
-      [id]
-    );
+    const [result] = await pool.query("DELETE FROM projects WHERE id = ?", [
+      id,
+    ]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
