@@ -105,17 +105,71 @@ router.get("/", async (req, res) => {
 router.use(protect);
 router.use(restrictTo("admin", "manager"));
 
+// router.post("/", upload.array("images", 10), async (req, res) => {
+//   const { error } = projectSchema.validate(req.body);
+//   if (error)
+//     return res
+//       .status(400)
+//       .json({ success: false, message: error.details[0].message });
+
+//   try {
+//     const { title, description, type, date, details } = req.body;
+//     const files = req.files || [];
+//     const imagePaths = files.map((f) => `/uploads/${f.filename}`);
+
+//     const [result] = await pool.query(
+//       `INSERT INTO projects 
+//        (title, description, type, date, details, images, created_by, created_at)
+//        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+//       [
+//         title.trim(),
+//         description.trim(),
+//         type,
+//         date,
+//         details?.trim() || null,
+//         JSON.stringify(imagePaths),
+//         req.user.id,
+//       ],
+//     );
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Project created successfully",
+//       data: { id: result.insertId },
+//     });
+//   } catch (err) {
+//     console.error("POST /projects error:", err);
+//     res
+//       .status(500)
+//       .json({
+//         success: false,
+//         message: "Failed to create project",
+//         error: err.message,
+//       });
+//   }
+// });
+
 router.post("/", upload.array("images", 10), async (req, res) => {
   const { error } = projectSchema.validate(req.body);
-  if (error)
-    return res
-      .status(400)
-      .json({ success: false, message: error.details[0].message });
+  if (error) {
+    return res.status(400).json({ success: false, message: error.details[0].message });
+  }
 
   try {
     const { title, description, type, date, details } = req.body;
     const files = req.files || [];
     const imagePaths = files.map((f) => `/uploads/${f.filename}`);
+
+    // Safety check for created_by
+    const createdBy = req.user?.id || null; // fallback to NULL if no user
+
+    console.log('Creating project with data:', {
+      title,
+      type,
+      date,
+      createdBy,
+      imageCount: imagePaths.length,
+    });
 
     const [result] = await pool.query(
       `INSERT INTO projects 
@@ -125,11 +179,11 @@ router.post("/", upload.array("images", 10), async (req, res) => {
         title.trim(),
         description.trim(),
         type,
-        date,
+        date,                  // make sure frontend sends YYYY-MM-DD
         details?.trim() || null,
         JSON.stringify(imagePaths),
-        req.user.id,
-      ],
+        createdBy,
+      ]
     );
 
     res.status(201).json({
@@ -138,14 +192,18 @@ router.post("/", upload.array("images", 10), async (req, res) => {
       data: { id: result.insertId },
     });
   } catch (err) {
-    console.error("POST /projects error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to create project",
-        error: err.message,
-      });
+    console.error('POST /projects FAILED:', {
+      message: err.message,
+      stack: err.stack,
+      body: req.body,
+      files: req.files?.length || 0,
+    });
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to create project",
+      error: err.message,
+    });
   }
 });
 
