@@ -22,6 +22,37 @@ import batteriesRouter from './routes/batteries.js';
 
 dotenv.config();
 
+// ────────────────────────────────────────────────
+// FORCE FILE LOGGING (add this block here)
+// ────────────────────────────────────────────────
+import fs from 'node:fs';
+
+const logFile = fs.createWriteStream(
+  path.join(__dirname, 'server-errors.log'), 
+  { flags: 'a' } // append mode
+);
+
+// Override console.log and console.error to also write to file
+const originalLog = console.log;
+const originalError = console.error;
+
+console.log = (...args) => {
+  const timestamp = new Date().toISOString();
+  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg)).join(' ');
+  logFile.write(`[${timestamp}] [LOG] ${message}\n`);
+  originalLog(...args);
+};
+
+console.error = (...args) => {
+  const timestamp = new Date().toISOString();
+  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg)).join(' ');
+  logFile.write(`[${timestamp}] [ERROR] ${message}\n`);
+  originalError(...args);
+};
+
+// Optional: log startup
+console.log('Server starting... PID:', process.pid);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -42,18 +73,6 @@ app.use(
   }),
 );
 
-const fs = require('fs');
-const logFile = fs.createWriteStream('server-errors.log', { flags: 'a' });
-
-console.log = (...args) => {
-  logFile.write(`${new Date().toISOString()} [LOG] ${args.join(' ')}\n`);
-  process.stdout.write(args.join(' ') + '\n');
-};
-
-console.error = (...args) => {
-  logFile.write(`${new Date().toISOString()} [ERROR] ${args.join(' ')}\n`);
-  process.stderr.write(args.join(' ') + '\n');
-};
 
 // To confirm if requests even reach the app
 app.use((req, res, next) => {
