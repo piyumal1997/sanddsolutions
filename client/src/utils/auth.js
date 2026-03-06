@@ -79,7 +79,7 @@ export const protectedFetch = async (url, options = {}) => {
 
   if (!token) {
     //Redirect to login if no token exists
-    globalThis.location.href = '/login';
+    window.location.href = '/login';
     return;
   }
 
