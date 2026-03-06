@@ -120,24 +120,23 @@ app.use("/api/", limiter);
 // ────────────────────────────────────────────────
 
 // JSON parser – only for JSON routes (prevents multipart crash)
-app.use(express.json({ limit: "10mb" }));
-// Parse urlencoded bodies (for multipart text fields + files)
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+const jsonParser = express.json({ limit: "10mb" });
+const urlencodedParser = express.urlencoded({ extended: true, limit: "10mb" });
 
-// JSON-only routes
-app.use("/api/auth", auth);
-app.use("/api/inquiries", inquiryRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/packages", packageRoutes);
-app.use("/api/panel-brands", panelBrandRoutes);
-app.use("/api/panel-capacities", panelCapacityRoutes);
-app.use("/api/inverter-brands", inverterBrandRoutes);
-app.use("/api/inverter-capacities", inverterCapacityRoutes);
-app.use("/api/batteries", batteriesRouter);
+// Apply JSON parser selectively to JSON-only routes
+app.use("/api/auth", jsonParser, auth);
+app.use("/api/inquiries", jsonParser, inquiryRoutes);
+app.use("/api/admin", jsonParser, adminRoutes);
+app.use("/api/notifications", jsonParser, notificationRoutes);
+app.use("/api/packages", jsonParser, packageRoutes);
+app.use("/api/panel-brands", jsonParser, panelBrandRoutes);
+app.use("/api/panel-capacities", jsonParser, panelCapacityRoutes);
+app.use("/api/inverter-brands", jsonParser, inverterBrandRoutes);
+app.use("/api/inverter-capacities", jsonParser, inverterCapacityRoutes);
+app.use("/api/batteries", jsonParser, batteriesRouter);
 
-// File upload routes (multer)
-app.use("/api/projects", projectRoutes);
+// File upload routes (multer) – do NOT use jsonParser here
+app.use("/api/projects", urlencodedParser, projectRoutes);
 
 // Fallback JSON parser for any missed JSON routes
 app.use(jsonParser);
