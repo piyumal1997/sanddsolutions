@@ -26,7 +26,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Mark as read
+// PUT /api/notifications/:id/read – mark as read
 router.put("/:id/read", async (req, res) => {
   try {
     const [result] = await pool.query(
@@ -41,6 +41,25 @@ router.put("/:id/read", async (req, res) => {
     res.json({ success: true, message: "Marked as read" });
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to update notification" });
+  }
+});
+
+// DELETE /api/notifications/:id – remove notification
+router.delete("/:id", async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      "DELETE FROM notifications WHERE id = ? AND user_id = ?",
+      [req.params.id, req.user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Notification not found" });
+    }
+
+    res.json({ success: true, message: "Notification deleted" });
+  } catch (err) {
+    console.error("Notification delete error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete notification" });
   }
 });
 

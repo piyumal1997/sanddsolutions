@@ -30,7 +30,6 @@ const Engineering = lazy(() => import("./pages/Engineering"));
 const Projects = lazy(() => import("./pages/Projects"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
-const Admin = lazy(() => import("./pages/AdminDashboard"));
 const SolarCalculatorPage = lazy(() => import("./pages/SolarCalculatorPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));

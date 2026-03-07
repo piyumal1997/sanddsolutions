@@ -22,6 +22,7 @@ import panelCapacityRoutes from "./routes/panel-capacities.js";
 import inverterBrandRoutes from "./routes/inverter-brands.js";
 import inverterCapacityRoutes from "./routes/inverter-capacities.js";
 import batteriesRouter from "./routes/batteries.js";
+import dashboardRoutes from "./routes/dashboard.js";
 
 dotenv.config();
 
@@ -154,6 +155,7 @@ app.use("/api/panel-capacities", jsonParser, panelCapacityRoutes);
 app.use("/api/inverter-brands", jsonParser, inverterBrandRoutes);
 app.use("/api/inverter-capacities", jsonParser, inverterCapacityRoutes);
 app.use("/api/batteries", jsonParser, batteriesRouter);
+app.use("/api/dashboard", jsonParser, dashboardRoutes);
 
 // File upload routes (multer)
 app.use("/api/projects", urlencodedParser, projectRoutes);

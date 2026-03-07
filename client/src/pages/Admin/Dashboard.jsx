@@ -2,11 +2,16 @@
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { BellIcon } from "@heroicons/react/24/outline";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { protectedFetch } from "../../utils/auth";
-import { useAuth } from "../../context/AuthContext"; // Add this import to access user from context
+import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Dashboard = () => {
-  const { user } = useAuth(); // Get user from context
+  const { user } = useAuth();
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -15,6 +20,7 @@ const Dashboard = () => {
     projects: 0,
     packages: 0,
     inquiries: 0,
+    activeUsers: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -28,21 +34,20 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const notifRes = await protectedFetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/notifications`,
-      );
+      // Fetch stats
+      const statsRes = await protectedFetch(`${API_BASE}/api/dashboard`);
+      if (statsRes.ok) {
+        const { data } = await statsRes.json();
+        setStats(data);
+      }
+
+      // Fetch notifications
+      const notifRes = await protectedFetch(`${API_BASE}/api/notifications`);
       if (notifRes.ok) {
         const { data } = await notifRes.json();
         setNotifications(data || []);
         setUnreadCount((data || []).filter((n) => !n.is_read).length);
       }
-
-      // Placeholder stats — replace with real endpoint later
-      setStats({
-        projects: 24,
-        packages: 11,
-        inquiries: 8,
-      });
     } catch (err) {
       if (!err.message?.includes("401")) {
         Swal.fire({
@@ -59,9 +64,21 @@ const Dashboard = () => {
   const markAsRead = async (id) => {
     try {
       await protectedFetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/notifications/${id}/read`,
+        `${API_BASE}/api/notifications/${id}/read`,
         {
           method: "PUT",
+        },
+      );
+      loadDashboardData();
+    } catch {}
+  };
+
+  const deleteNotification = async (id) => {
+    try {
+      await protectedFetch(
+        `${API_BASE}/api/notifications/${id}`,
+        {
+          method: "DELETE",
         },
       );
       loadDashboardData();
@@ -92,51 +109,54 @@ const Dashboard = () => {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="flex items-center gap-3 px-6 py-4 bg-white rounded-xl shadow hover:shadow-lg transition focus:outline-none"
+            className="relative p-3 bg-white rounded-full shadow hover:shadow-lg transition focus:outline-none"
           >
-            <BellIcon className="h-8 w-8 text-gray-700" />
-            <span className="font-semibold text-gray-800">Notifications</span>
+            <BellIcon className="h-6 w-6 text-gray-700" />
             {unreadCount > 0 && (
-              <span className="bg-red-600 text-white text-sm px-2.5 py-0.5 rounded-full font-bold">
+              <span className="absolute top-0 right-0 bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
                 {unreadCount}
               </span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-4 w-96 lg:w-[420px] bg-white rounded-2xl shadow-2xl z-50 max-h-[70vh] overflow-y-auto border border-gray-200">
-              <div className="p-6 border-b bg-gray-50 rounded-t-2xl">
-                <h3 className="text-2xl font-bold text-gray-900">
+            <div className="absolute right-0 mt-4 w-80 bg-white rounded-2xl shadow-2xl z-50 max-h-[70vh] overflow-y-auto border border-gray-200">
+              <div className="p-4 border-b bg-gray-50 rounded-t-2xl">
+                <h3 className="text-xl font-bold text-gray-900">
                   Notifications
                 </h3>
-                <p className="text-sm text-gray-600 mt-2">
-                  {unreadCount} unread • Recent activity
+                <p className="text-sm text-gray-600 mt-1">
+                  {unreadCount} unread
                 </p>
               </div>
 
               {notifications.length === 0 ? (
-                <div className="p-12 text-center text-gray-500 text-lg">
-                  No new notifications
+                <div className="p-8 text-center text-gray-500 text-lg">
+                  No notifications
                 </div>
               ) : (
                 notifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className={`p-6 border-b last:border-none hover:bg-gray-50 transition cursor-pointer ${
+                    className={`p-4 border-b last:border-none hover:bg-gray-50 transition cursor-pointer flex justify-between items-start ${
                       !notif.is_read ? "bg-blue-50" : ""
                     }`}
-                    onClick={() => !notif.is_read && markAsRead(notif.id)}
                   >
-                    <p className="font-bold text-gray-900 text-lg">
-                      {notif.title}
-                    </p>
-                    <p className="text-gray-700 mt-2">{notif.message}</p>
-                    <p className="text-sm text-gray-500 mt-3">
-                      {new Date(notif.created_at).toLocaleString("en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </p>
+                    <div className="flex-1" onClick={() => !notif.is_read && markAsRead(notif.id)}>
+                      <p className="font-bold text-gray-900 text-md">
+                        {notif.title}
+                      </p>
+                      <p className="text-gray-700 text-sm mt-1">{notif.message}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(notif.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => deleteNotification(notif.id)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      <FontAwesomeIcon icon={faTrash} size="sm" />
+                    </button>
                   </div>
                 ))
               )}
@@ -146,63 +166,65 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-2xl shadow-lg border border-green-200 hover:shadow-xl transition">
-          <h3 className="text-2xl font-semibold text-green-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl shadow-lg border border-green-200 hover:shadow-xl transition">
+          <h3 className="text-xl font-semibold text-green-800">
             Total Projects
           </h3>
-          <p className="text-6xl font-bold text-green-700 mt-4">
+          <p className="text-5xl font-bold text-green-700 mt-2">
             {stats.projects}
           </p>
-          <p className="text-green-600 mt-3">Showcase entries</p>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition">
-          <h3 className="text-2xl font-semibold text-blue-800">
-            Active Packages
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition">
+          <h3 className="text-xl font-semibold text-blue-800">
+            Solar Packages
           </h3>
-          <p className="text-6xl font-bold text-blue-700 mt-4">
+          <p className="text-5xl font-bold text-blue-700 mt-2">
             {stats.packages}
           </p>
-          <p className="text-blue-600 mt-3">Solar system offerings</p>
         </div>
 
-        <div className="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-2xl shadow-lg border border-red-200 hover:shadow-xl transition">
-          <h3 className="text-2xl font-semibold text-red-800">
+        <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-2xl shadow-lg border border-red-200 hover:shadow-xl transition">
+          <h3 className="text-xl font-semibold text-red-800">
             Pending Inquiries
           </h3>
-          <p className="text-6xl font-bold text-red-700 mt-4">
+          <p className="text-5xl font-bold text-red-700 mt-2">
             {stats.inquiries}
           </p>
-          <p className="text-red-600 mt-3">Awaiting response</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-2xl shadow-lg border border-purple-200 hover:shadow-xl transition">
+          <h3 className="text-xl font-semibold text-purple-800">
+            Active Users
+          </h3>
+          <p className="text-5xl font-bold text-purple-700 mt-2">
+            {stats.activeUsers}
+          </p>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+        <Link to="/admin/projects" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Projects</h3>
           <p className="text-gray-600">Manage showcase entries</p>
-        </div>
+        </Link>
 
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Packages</h3>
-          <p className="text-gray-600">Solar system offerings</p>
-        </div>
+        <Link to="/admin/packages" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Solar Packages</h3>
+          <p className="text-gray-600">Manage solar packages</p>
+        </Link>
 
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">
-            Panel Brands
-          </h3>
-          <p className="text-gray-600">Manage panel brands</p>
-        </div>
+        <Link to="/admin/brands" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Brands</h3>
+          <p className="text-gray-600">Manage brands</p>
+        </Link>
 
-        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">
-            Inverter Brands
-          </h3>
-          <p className="text-gray-600">Manage inverter brands</p>
-        </div>
+        <Link to="/admin/capacities" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Capacities</h3>
+          <p className="text-gray-600">Manage capacities</p>
+        </Link>
       </div>
     </div>
   );
