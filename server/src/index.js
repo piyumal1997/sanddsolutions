@@ -155,7 +155,7 @@ app.use("/api/inverter-brands", jsonParser, inverterBrandRoutes);
 app.use("/api/inverter-capacities", jsonParser, inverterCapacityRoutes);
 app.use("/api/batteries", jsonParser, batteriesRouter);
 
-// File upload routes (multer) – do NOT use jsonParser here
+// File upload routes (multer)
 app.use("/api/projects", urlencodedParser, projectRoutes);
 
 // Fallback JSON parser for any missed JSON routes
