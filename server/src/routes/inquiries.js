@@ -201,4 +201,70 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Protected admin routes
+router.use(protect);
+router.use(restrictTo('admin', 'manager'));
+
+// GET /api/inquiries – list all inquiries (admin/manager only)
+router.get('/', async (req, res) => {
+  try {
+    const status = req.query.status; // Optional: ?status=pending or ?status=completed
+
+    let query = `
+      SELECT 
+        i.id, i.name, i.email, i.phone, i.inquiry_type, i.message, 
+        i.request_completed, i.updated_by, i.completion_notes, i.created_at, i.updated_at,
+        u.email AS updated_by_email
+      FROM inquiries i
+      LEFT JOIN users u ON i.updated_by = u.id
+      ORDER BY i.created_at DESC
+    `;
+    const params = [];
+
+    if (status === 'pending') {
+      query = `SELECT * FROM (${query}) AS sub WHERE request_completed = 0`;
+    } else if (status === 'completed') {
+      query = `SELECT * FROM (${query}) AS sub WHERE request_completed = 1`;
+    }
+
+    const [inquiries] = await pool.query(query, params);
+
+    res.json({ success: true, data: inquiries });
+  } catch (err) {
+    console.error("GET /inquiries error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to load inquiries" });
+  }
+});
+
+// PUT /api/inquiries/:id/complete – mark as completed + optional notes
+router.put('/:id/complete', async (req, res) => {
+  const { completion_notes } = req.body; // optional
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE inquiries 
+       SET 
+         request_completed = 1, 
+         updated_by = ?, 
+         completion_notes = ?, 
+         updated_at = NOW()
+       WHERE id = ? AND request_completed = 0`, // only allow if still pending
+      [req.user.id, completion_notes?.trim() || null, req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Inquiry not found or already completed",
+      });
+    }
+
+    // Optional: Create notification for the user who submitted inquiry (if you store user_id later)
+    res.json({ success: true, message: "Inquiry marked as completed" });
+  } catch (err) {
+    console.error("PUT /inquiries/:id/complete error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to update inquiry" });
+  }
+});
+
 export default router;

@@ -13,6 +13,7 @@ import {
   faBars,
   faTimes,
   faHorseHead,
+  faMailBulk,
 } from '@fortawesome/free-solid-svg-icons';
 import { logout } from '../../utils/auth';
 import Swal from 'sweetalert2';
@@ -25,6 +26,7 @@ const SidebarNav = ({ role }) => {
     { path: '/admin/dashboard', label: 'Dashboard', icon: faHome },
     { path: '/admin/projects', label: 'Projects', icon: faSun },
     { path: '/admin/packages', label: 'Solar Packages', icon: faBox },
+    { path: '/admin/inquiries', label: 'Inquiries', icon: faMailBulk },
     { path: '/admin/brands', label: 'Brands', icon: faHorseHead },
     { path: '/admin/capacities', label: 'Capacities', icon: faBolt },
     { path: '/admin/batteries', label: 'Batteries', icon: faBatteryFull },

@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   try {
     const [projects] = await pool.query('SELECT COUNT(id) AS total FROM projects');
     const [packages] = await pool.query('SELECT COUNT(id) AS total FROM solar_packages');
-    const [inquiries] = await pool.query('SELECT COUNT(id) AS total FROM inquiries');
+    const [inquiries] = await pool.query('SELECT COUNT(id) AS total FROM inquiries WHERE request_completed = 0');
     const [activeUsers] = await pool.query('SELECT COUNT(id) AS total FROM users WHERE is_active = 1');
 
     const stats = {
