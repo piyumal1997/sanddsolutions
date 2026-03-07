@@ -368,7 +368,7 @@ const ProjectsManagement = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Title</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Type</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Images</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Medias</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>

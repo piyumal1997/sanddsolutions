@@ -1,22 +1,22 @@
-// src/components/ui/ProjectModal.jsx (Updated – Image Fits Full Modal Width/Height Better, No Crop)
+// src/components/ui/ProjectModal.jsx (Updated – Supports Video Playback, Responsive, No Crop)
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const ProjectModal = ({ project, onClose }) => {
-  const [currentImage, setCurrentImage] = useState(0);
+  const [currentMedia, setCurrentMedia] = useState(0);
 
-  const prevImage = () => {
-    setCurrentImage(prev => (prev > 0 ? prev - 1 : project.images.length - 1));
+  const prevMedia = () => {
+    setCurrentMedia(prev => (prev > 0 ? prev - 1 : project.images.length - 1));
   };
 
-  const nextImage = () => {
-    setCurrentImage(prev => (prev < project.images.length - 1 ? prev + 1 : 0));
+  const nextMedia = () => {
+    setCurrentMedia(prev => (prev < project.images.length - 1 ? prev + 1 : 0));
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'ArrowLeft') prevImage();
-    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevMedia();
+    if (e.key === 'ArrowRight') nextMedia();
     if (e.key === 'Escape') onClose();
   };
 
@@ -39,35 +39,44 @@ const ProjectModal = ({ project, onClose }) => {
       >
         <button 
           onClick={onClose} 
-          className="absolute top-3 right-3 text-gray-50 hover:text-gray-900 text-3xl transition-colors duration-200 z-10"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-3xl transition-colors duration-200 z-10"
           aria-label="Close modal"
         >
           <FontAwesomeIcon icon={faTimes} />
         </button>
 
-        {/* Image Carousel – Full-width, natural height up to 80vh, no forced aspect */}
+        {/* Media Carousel – Full-width, natural height up to 80vh, responsive */}
         <div className="relative flex-shrink-0">
-          <div className="overflow-hidden max-h-[80vh] rounded-t-2xl">
-            <img 
-              src={project.images[currentImage] || '/placeholder.jpg'} 
-              alt={`${project.title} - Image ${currentImage + 1}`} 
-              className="w-full h-auto object-contain transition-opacity duration-300 ease-in-out"
-              key={currentImage} // Key forces re-render for transition
-            />
+          <div className="overflow-hidden max-h-[80vh] rounded-t-2xl flex items-center justify-center bg-black">
+            {project.images[currentMedia].toLowerCase().endsWith('.mp4') ? (
+              <video 
+                src={project.images[currentMedia]} 
+                controls
+                className="w-full h-auto max-h-[80vh] object-contain transition-opacity duration-300 ease-in-out"
+                key={currentMedia} // Key forces re-render for transition
+              />
+            ) : (
+              <img 
+                src={project.images[currentMedia] || '/placeholder.jpg'} 
+                alt={`${project.title} - Media ${currentMedia + 1}`} 
+                className="w-full h-auto max-h-[80vh] object-contain transition-opacity duration-300 ease-in-out"
+                key={currentMedia}
+              />
+            )}
           </div>
           {project.images.length > 1 && (
             <>
               <button 
-                onClick={prevImage} 
+                onClick={prevMedia} 
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full hover:bg-white transition-all duration-200"
-                aria-label="Previous image"
+                aria-label="Previous media"
               >
                 <FontAwesomeIcon icon={faChevronLeft} />
               </button>
               <button 
-                onClick={nextImage} 
+                onClick={nextMedia} 
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full hover:bg-white transition-all duration-200"
-                aria-label="Next image"
+                aria-label="Next media"
               >
                 <FontAwesomeIcon icon={faChevronRight} />
               </button>
@@ -76,9 +85,9 @@ const ProjectModal = ({ project, onClose }) => {
                 {project.images.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentImage(index)}
-                    className={`w-2 h-2 rounded-full transition-colors duration-200 ${index === currentImage ? 'bg-green-900' : 'bg-gray-300'}`}
-                    aria-label={`Go to image ${index + 1}`}
+                    onClick={() => setCurrentMedia(index)}
+                    className={`w-2 h-2 rounded-full transition-colors duration-200 ${index === currentMedia ? 'bg-green-900' : 'bg-gray-300'}`}
+                    aria-label={`Go to media ${index + 1}`}
                   />
                 ))}
               </div>
@@ -86,7 +95,7 @@ const ProjectModal = ({ project, onClose }) => {
           )}
         </div>
 
-        {/* Project Details – Padded content below image, scrollable if needed */}
+        {/* Project Details – Padded content below media, scrollable if needed */}
         <div className="p-6 text-center md:text-left flex-grow overflow-y-auto">
           <h2 id="project-title" className="text-2xl font-bold text-green-900 mb-2">{project.title}</h2>
           <p className="text-lg text-gray-900 mb-1">{project.description}</p>
