@@ -42,6 +42,7 @@ const PackagesManagement = lazy(() => import("./pages/Admin/PackagesManagement")
 const BrandsManagement = lazy(() => import("./pages/Admin/BrandsManagement"));
 const CapacitiesManagement = lazy(() => import("./pages/Admin/CapacitiesManagement"));
 const BatteryManagement = lazy(() => import("./pages/Admin/BatteryManagement"));
+const InquiriesManagement = lazy(() => import("./pages/Admin/InquiriesManagement"));
 
 // In your App.jsx or wherever AdminLayout is defined
 // In App.jsx – replace your AdminLayout with this
@@ -131,6 +132,7 @@ const router = createBrowserRouter([
           { path: "/admin/projects", element: <ProjectsManagement /> },
           { path: "/admin/users", element: <UsersManagement /> },
           { path: "/admin/packages", element: <PackagesManagement /> },
+          { path: "/admin/inquiries", element: <InquiriesManagement /> },
           { path: "/admin/brands", element: <BrandsManagement /> },
           { path: "/admin/capacities", element: <CapacitiesManagement /> },
           { path: '/admin/batteries', element: <BatteryManagement /> },
