@@ -1,9 +1,10 @@
 // src/pages/admin/PackagesManagement.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { protectedFetch } from '../../utils/auth';
+import * as XLSX from 'xlsx'; // For Excel export
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const PackagesManagement = () => {
   const [packages, setPackages] = useState([]);
@@ -11,22 +12,26 @@ const PackagesManagement = () => {
   const [panelCapacities, setPanelCapacities] = useState([]);
   const [inverterBrands, setInverterBrands] = useState([]);
   const [inverterCapacities, setInverterCapacities] = useState([]);
-  const [batteries, setBatteries] = useState([]); // ← New: batteries list
+  const [batteries, setBatteries] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
     name: '',
-    package_type: 'On-Grid', // default
+    package_type: 'On-Grid',
     panel_brand_id: '',
     panel_capacity_id: '',
     panel_count: '',
     inverter_brand_id: '',
     inverter_capacity_id: '',
-    battery_id: '', // only used for Off-Grid/Hybrid
+    battery_id: '',
     full_price_lkr: '',
     description: '',
   });
+  const [files, setFiles] = useState([]);
+  const [filePreviews, setFilePreviews] = useState([]); // { url, type: 'image'|'video' }
+  const [keptExistingMedia, setKeptExistingMedia] = useState([]); // Existing media to keep (edit mode)
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadAllData();
@@ -34,8 +39,6 @@ const PackagesManagement = () => {
 
   const loadAllData = async () => {
     setLoading(true);
-    setError(null);
-
     try {
       const [
         pkgRes, pbRes, pcRes, ibRes, icRes, batRes
@@ -45,33 +48,21 @@ const PackagesManagement = () => {
         protectedFetch(`${API_BASE}/api/panel-capacities`),
         protectedFetch(`${API_BASE}/api/inverter-brands`),
         protectedFetch(`${API_BASE}/api/inverter-capacities`),
-        protectedFetch(`${API_BASE}/api/batteries`), // ← New
+        protectedFetch(`${API_BASE}/api/batteries`),
       ]);
 
-      const pkgData = await pkgRes.json();
-      setPackages(pkgData.success ? pkgData.data || [] : []);
-
-      const pbData = await pbRes.json();
-      setPanelBrands(pbData.success ? pbData.data || [] : []);
-
-      const pcData = await pcRes.json();
-      setPanelCapacities(pcData.success ? pcData.data || [] : []);
-
-      const ibData = await ibRes.json();
-      setInverterBrands(ibData.success ? ibData.data || [] : []);
-
-      const icData = await icRes.json();
-      setInverterCapacities(icData.success ? icData.data || [] : []);
-
-      const batData = await batRes.json();
-      setBatteries(batData.success ? batData.data || [] : []);
+      setPackages((await pkgRes.json()).data || []);
+      setPanelBrands((await pbRes.json()).data || []);
+      setPanelCapacities((await pcRes.json()).data || []);
+      setInverterBrands((await ibRes.json()).data || []);
+      setInverterCapacities((await icRes.json()).data || []);
+      setBatteries((await batRes.json()).data || []);
     } catch (err) {
-      console.error('Failed to load packages data:', err);
-      setError('Failed to load packages, brands, capacities, or batteries.');
+      console.error('Failed to load data:', err);
       Swal.fire({
         icon: 'error',
         title: 'Load Error',
-        text: 'Could not load data. Check your connection or server.',
+        text: 'Could not load data. Please try again.',
       });
     } finally {
       setLoading(false);
@@ -80,53 +71,52 @@ const PackagesManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitLoading(true);
 
-    // Required fields (common)
-    if (!form.name.trim() ||
-        !form.package_type ||
-        !form.panel_brand_id ||
-        !form.panel_capacity_id ||
-        !form.panel_count ||
-        !form.inverter_brand_id ||
-        !form.inverter_capacity_id ||
-        !form.full_price_lkr) {
+    // Basic validation
+    if (!form.name.trim() || !form.package_type || !form.panel_brand_id ||
+        !form.panel_capacity_id || !form.panel_count || !form.inverter_brand_id ||
+        !form.inverter_capacity_id || !form.full_price_lkr) {
       Swal.fire('Error', 'All required fields must be filled', 'error');
+      setSubmitLoading(false);
       return;
     }
 
-    // Battery validation based on package_type
     if (['Off-Grid', 'Hybrid'].includes(form.package_type) && !form.battery_id) {
       Swal.fire('Error', 'Battery is required for Off-Grid or Hybrid packages', 'error');
+      setSubmitLoading(false);
       return;
     }
 
     if (form.package_type === 'On-Grid' && form.battery_id) {
       Swal.fire('Error', 'On-Grid packages cannot have a battery', 'error');
+      setSubmitLoading(false);
       return;
     }
 
     try {
-      const payload = {
-        name: form.name.trim(),
-        package_type: form.package_type,
-        panel_brand_id: form.panel_brand_id,
-        panel_capacity_id: form.panel_capacity_id,
-        panel_count: Number(form.panel_count),
-        inverter_brand_id: form.inverter_brand_id,
-        inverter_capacity_id: form.inverter_capacity_id,
-        battery_id: form.battery_id || null, // null for On-Grid
-        full_price_lkr: Number(form.full_price_lkr),
-        description: form.description.trim() || null,
-      };
+      const payload = new FormData();
+      payload.append('name', form.name.trim());
+      payload.append('package_type', form.package_type);
+      payload.append('panel_brand_id', form.panel_brand_id);
+      payload.append('panel_capacity_id', form.panel_capacity_id);
+      payload.append('panel_count', form.panel_count);
+      payload.append('inverter_brand_id', form.inverter_brand_id);
+      payload.append('inverter_capacity_id', form.inverter_capacity_id);
+      payload.append('battery_id', form.battery_id || '');
+      payload.append('full_price_lkr', form.full_price_lkr);
+      payload.append('description', form.description.trim() || '');
+
+      if (editing) {
+        payload.append('existingImages', JSON.stringify(keptExistingMedia || []));
+      }
+
+      files.forEach(file => payload.append('images', file));
 
       const url = editing ? `${API_BASE}/api/packages/${editing.id}` : `${API_BASE}/api/packages`;
       const method = editing ? 'PUT' : 'POST';
 
-      const res = await protectedFetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await protectedFetch(url, { method, body: payload });
 
       if (!res.ok) {
         const errData = await res.json();
@@ -148,6 +138,8 @@ const PackagesManagement = () => {
         title: 'Error',
         text: err.message || 'Failed to save package',
       });
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -165,6 +157,10 @@ const PackagesManagement = () => {
       full_price_lkr: '',
       description: '',
     });
+    setFiles([]);
+    setFilePreviews([]);
+    setKeptExistingMedia([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleEdit = (pkg) => {
@@ -181,6 +177,30 @@ const PackagesManagement = () => {
       full_price_lkr: pkg.full_price_lkr || '',
       description: pkg.description || '',
     });
+    setFiles([]);
+    setFilePreviews([]);
+    setKeptExistingMedia(pkg.images || []);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileChange = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+    setFiles(prev => [...prev, ...newFiles]);
+
+    const newPreviews = newFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+    }));
+    setFilePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeNewFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFilePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingMedia = (index) => {
+    setKeptExistingMedia(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = async (id) => {
@@ -196,19 +216,14 @@ const PackagesManagement = () => {
     if (!confirmed.isConfirmed) return;
 
     try {
-      const res = await protectedFetch(`${API_BASE}/api/packages/${id}`, {
-        method: 'DELETE',
-      });
-
+      const res = await protectedFetch(`${API_BASE}/api/packages/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
-
       Swal.fire({
         icon: 'success',
         title: 'Success',
         text: 'Package deleted successfully',
         timer: 2000,
       });
-
       loadAllData();
     } catch (err) {
       Swal.fire({
@@ -219,30 +234,49 @@ const PackagesManagement = () => {
     }
   };
 
+  // Export to Excel
+  const exportToExcel = () => {
+    if (packages.length === 0) {
+      Swal.fire('Info', 'No packages to export', 'info');
+      return;
+    }
+
+    const data = packages.map(pkg => ({
+      ID: pkg.id,
+      'Package Name': pkg.name,
+      Type: pkg.package_type,
+      'Panel Brand': panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || '—',
+      'Panel Capacity (W)': panelCapacities.find(c => c.id === pkg.panel_capacity_id)?.wattage || '—',
+      'Panel Count': pkg.panel_count,
+      'Inverter Brand': inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || '—',
+      'Inverter Capacity (kW)': inverterCapacities.find(c => c.id === pkg.inverter_capacity_id)?.capacity_kw || '—',
+      Battery: pkg.battery_brand 
+        ? `${pkg.battery_brand} – ${pkg.battery_capacity_kwh} kWh (LKR ${Number(pkg.battery_price_lkr).toLocaleString()})`
+        : 'None',
+      'Full Price (LKR)': Number(pkg.full_price_lkr).toLocaleString(),
+      Description: pkg.description || '—',
+      'Created At': new Date(pkg.created_at).toLocaleString(),
+      'Updated At': pkg.updated_at ? new Date(pkg.updated_at).toLocaleString() : '—',
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Solar Packages');
+
+    XLSX.writeFile(wb, `Solar_Packages_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Exported!',
+      text: `Downloaded ${packages.length} packages`,
+      timer: 2000,
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-700">Loading packages data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-center">
-        <div>
-          <p className="text-2xl text-red-600 mb-4">Error Loading Data</p>
-          <p className="text-gray-700 mb-6">{error}</p>
-          <button
-            onClick={loadAllData}
-            className="px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
-          >
-            Try Again
-          </button>
-        </div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600"></div>
       </div>
     );
   }
@@ -251,8 +285,8 @@ const PackagesManagement = () => {
     <div className="p-6 lg:p-10">
       <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">Solar Packages Management</h1>
 
-      {/* Form Section */}
-      <div className="bg-white p-8 lg:p-10 rounded-2xl shadow-xl mb-12">
+      {/* Form */}
+      <div className="bg-white rounded-2xl shadow-xl p-8 mb-12">
         <h2 className="text-3xl font-bold mb-8">
           {editing ? 'Edit Solar Package' : 'Add New Solar Package'}
         </h2>
@@ -278,7 +312,7 @@ const PackagesManagement = () => {
                 setForm({
                   ...form,
                   package_type: newType,
-                  battery_id: newType === 'On-Grid' ? '' : form.battery_id, // clear battery if On-Grid
+                  battery_id: newType === 'On-Grid' ? '' : form.battery_id,
                 });
               }}
               required
@@ -290,12 +324,9 @@ const PackagesManagement = () => {
             </select>
           </div>
 
-          {/* Battery – only for Off-Grid & Hybrid */}
           {(form.package_type === 'Off-Grid' || form.package_type === 'Hybrid') && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Battery *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Battery *</label>
               <select
                 value={form.battery_id}
                 onChange={(e) => setForm({ ...form, battery_id: e.target.value })}
@@ -417,12 +448,90 @@ const PackagesManagement = () => {
             />
           </div>
 
-          <div className="md:col-span-2 lg:col-span-3 flex gap-6 mt-8">
+          {/* Existing Media Preview (Edit Mode) */}
+          {editing && keptExistingMedia.length > 0 && (
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Existing Media</label>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                {keptExistingMedia.map((url, idx) => (
+                  <div key={idx} className="relative group">
+                    {url.toLowerCase().endsWith('.mp4') ? (
+                      <video
+                        src={url}
+                        className="w-full h-32 md:h-40 object-cover rounded-xl"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt="Existing"
+                        className="w-full h-32 md:h-40 object-cover rounded-xl"
+                      />
+                    )}
+                    <button
+                      onClick={() => removeExistingMedia(idx)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 text-xs opacity-90 hover:opacity-100 transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Upload + Previews */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload New Images/Videos (optional)
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/mp4"
+              onChange={handleFileChange}
+              className="w-full p-4 border border-gray-300 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-green-50 file:text-green-700"
+            />
+
+            {filePreviews.length > 0 && (
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                {filePreviews.map((preview, idx) => (
+                  <div key={idx} className="relative group">
+                    {preview.type === 'video' ? (
+                      <video
+                        src={preview.url}
+                        className="w-full h-32 md:h-40 object-cover rounded-xl"
+                        controls
+                      />
+                    ) : (
+                      <img
+                        src={preview.url}
+                        alt="Preview"
+                        className="w-full h-32 md:h-40 object-cover rounded-xl"
+                      />
+                    )}
+                    <button
+                      onClick={() => removeNewFile(idx)}
+                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 text-xs opacity-90 hover:opacity-100 transition"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="md:col-span-3 flex gap-6 mt-8">
             <button
               type="submit"
-              className="flex-1 bg-green-600 text-white py-4 rounded-xl hover:bg-green-700 transition font-semibold shadow-md"
+              disabled={submitLoading}
+              className={`flex-1 py-4 rounded-xl font-semibold text-white transition shadow-md ${
+                submitLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
-              {editing ? 'Update Package' : 'Add Package'}
+              {submitLoading ? 'Saving...' : editing ? 'Update Package' : 'Add Package'}
             </button>
 
             {editing && (
@@ -438,10 +547,27 @@ const PackagesManagement = () => {
         </form>
       </div>
 
-      {/* Packages Table */}
-      <h2 className="text-3xl font-bold mb-8 text-gray-900">
-        All Solar Packages ({packages.length})
-      </h2>
+      {/* Packages Table + Export */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <h2 className="text-3xl font-bold text-gray-900">
+          All Solar Packages ({packages.length})
+        </h2>
+
+        <button
+          onClick={exportToExcel}
+          disabled={loading || packages.length === 0}
+          className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition ${
+            loading || packages.length === 0
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export to Excel
+        </button>
+      </div>
 
       {packages.length === 0 ? (
         <div className="bg-white p-10 rounded-2xl shadow text-center text-gray-600">
@@ -474,12 +600,12 @@ const PackagesManagement = () => {
                     {Number(pkg.full_price_lkr).toLocaleString()} LKR
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {pkg.panel_count} × {pkg.panel_wattage || '?'}W
+                    {pkg.panel_count} × {panelCapacities.find(c => c.id === pkg.panel_capacity_id)?.wattage || '?'}W
                     <br />
                     <small>{panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || 'Unknown'}</small>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {pkg.inverter_capacity_kw || '?'} kW {pkg.inverter_type || ''}
+                    {inverterCapacities.find(c => c.id === pkg.inverter_capacity_id)?.capacity_kw || '?'} kW
                     <br />
                     <small>{inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || 'Unknown'}</small>
                   </td>
