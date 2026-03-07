@@ -107,10 +107,10 @@ const SidebarNav = ({ role }) => {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-gray-800 mt-auto shrink-0">
+        <div className="p-2 border-t border-gray-800 mt-auto shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full p-4 rounded-lg text-red-400 hover:bg-gray-800 hover:text-red-300 transition"
+            className="flex items-center gap-3 w-full p-3 rounded-lg text-red-400 hover:bg-gray-800 hover:text-red-300 transition"
           >
             <FontAwesomeIcon icon={faSignOutAlt} className="w-5 h-5" />
             Logout
