@@ -16,7 +16,8 @@ const ProjectsManagement = () => {
     details: '',
   });
   const [files, setFiles] = useState([]);
-  const [filePreviews, setFilePreviews] = useState([]); // For image/video previews
+  const [filePreviews, setFilePreviews] = useState([]); // For new image/video previews
+  const [keptExistingImages, setKeptExistingImages] = useState([]); // For existing images to keep
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false); // Separate loading for submit
   const fileInputRef = useRef(null); // Ref to reset file input
@@ -59,7 +60,7 @@ const ProjectsManagement = () => {
       payload.append('details', form.details.trim());
 
       if (editing) {
-        payload.append('existingImages', JSON.stringify(editing.images || []));
+        payload.append('existingImages', JSON.stringify(keptExistingImages || []));
       }
 
       files.forEach(file => payload.append('images', file));
@@ -105,6 +106,7 @@ const ProjectsManagement = () => {
     });
     setFiles([]);
     setFilePreviews([]); // Clear previews
+    setKeptExistingImages([]); // Clear kept existing
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // Reset file input field
     }
@@ -121,6 +123,7 @@ const ProjectsManagement = () => {
     });
     setFiles([]);
     setFilePreviews([]);
+    setKeptExistingImages(project.images || []); // Initialize with existing images
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // Reset file input on edit
     }
@@ -128,11 +131,28 @@ const ProjectsManagement = () => {
 
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFiles(newFiles);
+    setFiles([...files, ...newFiles]); // Append new files
 
-    // Generate previews
-    const previews = newFiles.map((file) => URL.createObjectURL(file));
-    setFilePreviews(previews);
+    // Generate previews for new files
+    const newPreviews = newFiles.map((file) => ({
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+    }));
+    setFilePreviews([...filePreviews, ...newPreviews]);
+  };
+
+  // Remove new uploaded file
+  const removeNewFile = (index) => {
+    const updatedFiles = files.filter((_, i) => i !== index);
+    const updatedPreviews = filePreviews.filter((_, i) => i !== index);
+    setFiles(updatedFiles);
+    setFilePreviews(updatedPreviews);
+  };
+
+  // Remove existing image/video
+  const removeExistingImage = (index) => {
+    const updatedImages = keptExistingImages.filter((_, i) => i !== index);
+    setKeptExistingImages(updatedImages);
   };
 
   const handleDelete = async (id) => {
@@ -251,13 +271,25 @@ const ProjectsManagement = () => {
             />
           </div>
 
-          {/* Existing Images Preview in Edit Mode */}
-          {editing && editing.images && editing.images.length > 0 && (
+          {/* Existing Images/Video Preview in Edit Mode */}
+          {editing && keptExistingImages && keptExistingImages.length > 0 && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Existing Images</label>
-              <div className="grid grid-cols-3 gap-4">
-                {editing.images.map((img, idx) => (
-                  <img key={idx} src={img} alt="Existing" className="w-full h-32 object-cover rounded-xl" />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Existing Media</label>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                {keptExistingImages.map((url, idx) => (
+                  <div key={idx} className="relative w-full h-32 md:h-40">
+                    {url.toLowerCase().endsWith('.mp4') ? (
+                      <video src={url} className="w-full h-full object-cover rounded-xl" />
+                    ) : (
+                      <img src={url} alt="Existing" className="w-full h-full object-cover rounded-xl" />
+                    )}
+                    <button
+                      onClick={() => removeExistingImage(idx)}
+                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                    >
+                      X
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -265,19 +297,31 @@ const ProjectsManagement = () => {
 
           {/* New Files Upload and Preview */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload New Images (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Upload New Images/Videos (optional)</label>
             <input
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*"
+              accept="image/*,video/mp4"
               onChange={handleFileChange}
               className="w-full p-4 border border-gray-300 rounded-xl"
             />
             {filePreviews.length > 0 && (
-              <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-4">
                 {filePreviews.map((preview, idx) => (
-                  <img key={idx} src={preview} alt="Preview" className="w-full h-32 object-cover rounded-xl" />
+                  <div key={idx} className="relative w-full h-32 md:h-40">
+                    {preview.type === 'video' ? (
+                      <video src={preview.url} className="w-full h-full object-cover rounded-xl" />
+                    ) : (
+                      <img src={preview.url} alt="Preview" className="w-full h-full object-cover rounded-xl" />
+                    )}
+                    <button
+                      onClick={() => removeNewFile(idx)}
+                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                    >
+                      X
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -307,7 +351,7 @@ const ProjectsManagement = () => {
 
       {/* Projects Table */}
       <h2 className="text-3xl font-bold mb-8 text-gray-900">
-        All Projects ({projects.length})
+        All Solar Projects ({projects.length})
       </h2>
 
       {projects.length === 0 ? (
