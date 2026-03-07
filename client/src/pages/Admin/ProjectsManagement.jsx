@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { protectedFetch } from '../../utils/auth';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const ProjectsManagement = () => {
   const [projects, setProjects] = useState([]);
@@ -16,11 +16,11 @@ const ProjectsManagement = () => {
     details: '',
   });
   const [files, setFiles] = useState([]);
-  const [filePreviews, setFilePreviews] = useState([]); // For new image/video previews
-  const [keptExistingImages, setKeptExistingImages] = useState([]); // For existing images to keep
+  const [filePreviews, setFilePreviews] = useState([]); // { url, type: 'image'|'video' }
+  const [keptExistingImages, setKeptExistingImages] = useState([]); // Existing images to keep
   const [loading, setLoading] = useState(true);
-  const [submitLoading, setSubmitLoading] = useState(false); // Separate loading for submit
-  const fileInputRef = useRef(null); // Ref to reset file input
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadProjects();
@@ -49,7 +49,7 @@ const ProjectsManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitLoading(true); // Start submit loading
+    setSubmitLoading(true);
 
     try {
       const payload = new FormData();
@@ -91,7 +91,7 @@ const ProjectsManagement = () => {
         text: err.message,
       });
     } finally {
-      setSubmitLoading(false); // End submit loading
+      setSubmitLoading(false);
     }
   };
 
@@ -105,10 +105,10 @@ const ProjectsManagement = () => {
       details: '',
     });
     setFiles([]);
-    setFilePreviews([]); // Clear previews
-    setKeptExistingImages([]); // Clear kept existing
+    setFilePreviews([]);
+    setKeptExistingImages([]);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset file input field
+      fileInputRef.current.value = '';
     }
   };
 
@@ -123,36 +123,30 @@ const ProjectsManagement = () => {
     });
     setFiles([]);
     setFilePreviews([]);
-    setKeptExistingImages(project.images || []); // Initialize with existing images
+    setKeptExistingImages(project.images || []);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset file input on edit
+      fileInputRef.current.value = '';
     }
   };
 
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFiles([...files, ...newFiles]); // Append new files
+    setFiles(prev => [...prev, ...newFiles]);
 
-    // Generate previews for new files
-    const newPreviews = newFiles.map((file) => ({
+    const newPreviews = newFiles.map(file => ({
       url: URL.createObjectURL(file),
       type: file.type.startsWith('video/') ? 'video' : 'image',
     }));
-    setFilePreviews([...filePreviews, ...newPreviews]);
+    setFilePreviews(prev => [...prev, ...newPreviews]);
   };
 
-  // Remove new uploaded file
   const removeNewFile = (index) => {
-    const updatedFiles = files.filter((_, i) => i !== index);
-    const updatedPreviews = filePreviews.filter((_, i) => i !== index);
-    setFiles(updatedFiles);
-    setFilePreviews(updatedPreviews);
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFilePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Remove existing image/video
   const removeExistingImage = (index) => {
-    const updatedImages = keptExistingImages.filter((_, i) => i !== index);
-    setKeptExistingImages(updatedImages);
+    setKeptExistingImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = async (id) => {
@@ -226,7 +220,7 @@ const ProjectsManagement = () => {
               value={form.type}
               onChange={(e) => setForm({ ...form, type: e.target.value })}
               required
-              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+              className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
             >
               <option value="residential-solar">Residential Solar</option>
               <option value="industrial-solar">Industrial Solar</option>
@@ -271,23 +265,37 @@ const ProjectsManagement = () => {
             />
           </div>
 
-          {/* Existing Images/Video Preview in Edit Mode */}
-          {editing && keptExistingImages && keptExistingImages.length > 0 && (
+          {/* Existing Media Preview (Edit Mode) */}
+          {editing && keptExistingImages.length > 0 && (
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">Existing Media</label>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                 {keptExistingImages.map((url, idx) => (
-                  <div key={idx} className="relative w-full h-32 md:h-40">
+                  <div 
+                    key={idx} 
+                    className="relative group aspect-square overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                  >
                     {url.toLowerCase().endsWith('.mp4') ? (
-                      <video src={url} className="w-full h-full object-cover rounded-xl" />
+                      <video
+                        src={url}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        playsInline
+                      />
                     ) : (
-                      <img src={url} alt="Existing" className="w-full h-full object-cover rounded-xl" />
+                      <img
+                        src={url}
+                        alt="Existing media"
+                        className="w-full h-full object-cover"
+                      />
                     )}
                     <button
                       onClick={() => removeExistingImage(idx)}
-                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-md opacity-90 hover:opacity-100 transition-opacity z-10"
+                      title="Remove this media"
                     >
-                      X
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -295,43 +303,65 @@ const ProjectsManagement = () => {
             </div>
           )}
 
-          {/* New Files Upload and Preview */}
+          {/* New Upload + Previews */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload New Images/Videos (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload New Images/Videos (optional – max 10)
+            </label>
             <input
               ref={fileInputRef}
               type="file"
               multiple
               accept="image/*,video/mp4"
               onChange={handleFileChange}
-              className="w-full p-4 border border-gray-300 rounded-xl"
+              className="w-full p-4 border border-gray-300 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-green-50 file:text-green-700 hover:file:bg-green-100 transition"
             />
+
             {filePreviews.length > 0 && (
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-                {filePreviews.map((preview, idx) => (
-                  <div key={idx} className="relative w-full h-32 md:h-40">
-                    {preview.type === 'video' ? (
-                      <video src={preview.url} className="w-full h-full object-cover rounded-xl" />
-                    ) : (
-                      <img src={preview.url} alt="Preview" className="w-full h-full object-cover rounded-xl" />
-                    )}
-                    <button
-                      onClick={() => removeNewFile(idx)}
-                      className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+              <div className="mt-6">
+                <p className="text-sm font-medium text-gray-600 mb-3">New Upload Previews</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                  {filePreviews.map((preview, idx) => (
+                    <div 
+                      key={idx} 
+                      className="relative group aspect-square overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow"
                     >
-                      X
-                    </button>
-                  </div>
-                ))}
+                      {preview.type === 'video' ? (
+                        <video
+                          src={preview.url}
+                          className="w-full h-full object-cover"
+                          muted
+                          loop
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={preview.url}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                      <button
+                        onClick={() => removeNewFile(idx)}
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold shadow-md opacity-90 hover:opacity-100 transition-opacity z-10"
+                        title="Remove this file"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          <div className="md:col-span-2 flex gap-6 mt-6">
+          <div className="md:col-span-2 flex gap-6 mt-8">
             <button
               type="submit"
               disabled={submitLoading}
-              className="flex-1 bg-green-600 text-white py-4 rounded-xl hover:bg-green-700 transition font-semibold shadow-md"
+              className={`flex-1 py-4 rounded-xl font-semibold text-white transition shadow-md ${
+                submitLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
               {submitLoading ? 'Saving...' : editing ? 'Update Project' : 'Add Project'}
             </button>
@@ -377,7 +407,7 @@ const ProjectsManagement = () => {
                 <tr key={project.id} className="hover:bg-gray-50 transition">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{project.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{project.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{project.type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{project.type.replace('-', ' ').toUpperCase()}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                     {project.date ? new Date(project.date).toLocaleDateString() : 'N/A'}
                   </td>

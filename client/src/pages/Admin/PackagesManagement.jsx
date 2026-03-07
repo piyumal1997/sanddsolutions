@@ -1,10 +1,10 @@
 // src/pages/admin/PackagesManagement.jsx
-import { useState, useEffect, useRef } from 'react';
-import Swal from 'sweetalert2';
-import { protectedFetch } from '../../utils/auth';
-import * as XLSX from 'xlsx'; // For Excel export
+import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+import { protectedFetch } from "../../utils/auth";
+import * as XLSX from "xlsx"; // For Excel export
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 const PackagesManagement = () => {
   const [packages, setPackages] = useState([]);
@@ -15,23 +15,19 @@ const PackagesManagement = () => {
   const [batteries, setBatteries] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
-    name: '',
-    package_type: 'On-Grid',
-    panel_brand_id: '',
-    panel_capacity_id: '',
-    panel_count: '',
-    inverter_brand_id: '',
-    inverter_capacity_id: '',
-    battery_id: '',
-    full_price_lkr: '',
-    description: '',
+    name: "",
+    package_type: "On-Grid",
+    panel_brand_id: "",
+    panel_capacity_id: "",
+    panel_count: "",
+    inverter_brand_id: "",
+    inverter_capacity_id: "",
+    battery_id: "",
+    full_price_lkr: "",
+    description: "",
   });
-  const [files, setFiles] = useState([]);
-  const [filePreviews, setFilePreviews] = useState([]); // { url, type: 'image'|'video' }
-  const [keptExistingMedia, setKeptExistingMedia] = useState([]); // Existing media to keep (edit mode)
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     loadAllData();
@@ -40,9 +36,7 @@ const PackagesManagement = () => {
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [
-        pkgRes, pbRes, pcRes, ibRes, icRes, batRes
-      ] = await Promise.all([
+      const [pkgRes, pbRes, pcRes, ibRes, icRes, batRes] = await Promise.all([
         protectedFetch(`${API_BASE}/api/packages`),
         protectedFetch(`${API_BASE}/api/panel-brands`),
         protectedFetch(`${API_BASE}/api/panel-capacities`),
@@ -58,11 +52,11 @@ const PackagesManagement = () => {
       setInverterCapacities((await icRes.json()).data || []);
       setBatteries((await batRes.json()).data || []);
     } catch (err) {
-      console.error('Failed to load data:', err);
+      console.error("Failed to load data:", err);
       Swal.fire({
-        icon: 'error',
-        title: 'Load Error',
-        text: 'Could not load data. Please try again.',
+        icon: "error",
+        title: "Load Error",
+        text: "Could not load data. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -74,59 +68,78 @@ const PackagesManagement = () => {
     setSubmitLoading(true);
 
     // Basic validation
-    if (!form.name.trim() || !form.package_type || !form.panel_brand_id ||
-        !form.panel_capacity_id || !form.panel_count || !form.inverter_brand_id ||
-        !form.inverter_capacity_id || !form.full_price_lkr) {
-      Swal.fire('Error', 'All required fields must be filled', 'error');
+    if (
+      !form.name.trim() ||
+      !form.package_type ||
+      !form.panel_brand_id ||
+      !form.panel_capacity_id ||
+      !form.panel_count ||
+      !form.inverter_brand_id ||
+      !form.inverter_capacity_id ||
+      !form.full_price_lkr
+    ) {
+      Swal.fire("Error", "All required fields must be filled", "error");
       setSubmitLoading(false);
       return;
     }
 
-    if (['Off-Grid', 'Hybrid'].includes(form.package_type) && !form.battery_id) {
-      Swal.fire('Error', 'Battery is required for Off-Grid or Hybrid packages', 'error');
+    if (
+      ["Off-Grid", "Hybrid"].includes(form.package_type) &&
+      !form.battery_id
+    ) {
+      Swal.fire(
+        "Error",
+        "Battery is required for Off-Grid or Hybrid packages",
+        "error",
+      );
       setSubmitLoading(false);
       return;
     }
 
-    if (form.package_type === 'On-Grid' && form.battery_id) {
-      Swal.fire('Error', 'On-Grid packages cannot have a battery', 'error');
+    if (form.package_type === "On-Grid" && form.battery_id) {
+      Swal.fire("Error", "On-Grid packages cannot have a battery", "error");
       setSubmitLoading(false);
       return;
     }
 
     try {
-      const payload = new FormData();
-      payload.append('name', form.name.trim());
-      payload.append('package_type', form.package_type);
-      payload.append('panel_brand_id', form.panel_brand_id);
-      payload.append('panel_capacity_id', form.panel_capacity_id);
-      payload.append('panel_count', form.panel_count);
-      payload.append('inverter_brand_id', form.inverter_brand_id);
-      payload.append('inverter_capacity_id', form.inverter_capacity_id);
-      payload.append('battery_id', form.battery_id || '');
-      payload.append('full_price_lkr', form.full_price_lkr);
-      payload.append('description', form.description.trim() || '');
+      const payload = {
+        name: form.name.trim(),
+        package_type: form.package_type,
+        panel_brand_id: form.panel_brand_id,
+        panel_capacity_id: form.panel_capacity_id,
+        panel_count: Number(form.panel_count),
+        inverter_brand_id: form.inverter_brand_id,
+        inverter_capacity_id: form.inverter_capacity_id,
+        battery_id: form.battery_id || null,
+        full_price_lkr: Number(form.full_price_lkr),
+        description: form.description.trim() || null,
+      };
 
-      if (editing) {
-        payload.append('existingImages', JSON.stringify(keptExistingMedia || []));
-      }
+      const url = editing
+        ? `${API_BASE}/api/packages/${editing.id}`
+        : `${API_BASE}/api/packages`;
+      const method = editing ? "PUT" : "POST";
 
-      files.forEach(file => payload.append('images', file));
-
-      const url = editing ? `${API_BASE}/api/packages/${editing.id}` : `${API_BASE}/api/packages`;
-      const method = editing ? 'PUT' : 'POST';
-
-      const res = await protectedFetch(url, { method, body: payload });
+      const res = await protectedFetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.message || (editing ? 'Update failed' : 'Create failed'));
+        throw new Error(
+          errData.message || (editing ? "Update failed" : "Create failed"),
+        );
       }
 
       Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: editing ? 'Package updated successfully' : 'Package created successfully',
+        icon: "success",
+        title: "Success",
+        text: editing
+          ? "Package updated successfully"
+          : "Package created successfully",
         timer: 2000,
       });
 
@@ -134,9 +147,9 @@ const PackagesManagement = () => {
       resetForm();
     } catch (err) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Failed to save package',
+        icon: "error",
+        title: "Error",
+        text: err.message || "Failed to save package",
       });
     } finally {
       setSubmitLoading(false);
@@ -146,90 +159,64 @@ const PackagesManagement = () => {
   const resetForm = () => {
     setEditing(null);
     setForm({
-      name: '',
-      package_type: 'On-Grid',
-      panel_brand_id: '',
-      panel_capacity_id: '',
-      panel_count: '',
-      inverter_brand_id: '',
-      inverter_capacity_id: '',
-      battery_id: '',
-      full_price_lkr: '',
-      description: '',
+      name: "",
+      package_type: "On-Grid",
+      panel_brand_id: "",
+      panel_capacity_id: "",
+      panel_count: "",
+      inverter_brand_id: "",
+      inverter_capacity_id: "",
+      battery_id: "",
+      full_price_lkr: "",
+      description: "",
     });
-    setFiles([]);
-    setFilePreviews([]);
-    setKeptExistingMedia([]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleEdit = (pkg) => {
     setEditing(pkg);
     setForm({
-      name: pkg.name || '',
-      package_type: pkg.package_type || 'On-Grid',
-      panel_brand_id: pkg.panel_brand_id || '',
-      panel_capacity_id: pkg.panel_capacity_id || '',
-      panel_count: pkg.panel_count || '',
-      inverter_brand_id: pkg.inverter_brand_id || '',
-      inverter_capacity_id: pkg.inverter_capacity_id || '',
-      battery_id: pkg.battery_id || '',
-      full_price_lkr: pkg.full_price_lkr || '',
-      description: pkg.description || '',
+      name: pkg.name || "",
+      package_type: pkg.package_type || "On-Grid",
+      panel_brand_id: pkg.panel_brand_id || "",
+      panel_capacity_id: pkg.panel_capacity_id || "",
+      panel_count: pkg.panel_count || "",
+      inverter_brand_id: pkg.inverter_brand_id || "",
+      inverter_capacity_id: pkg.inverter_capacity_id || "",
+      battery_id: pkg.battery_id || "",
+      full_price_lkr: pkg.full_price_lkr || "",
+      description: pkg.description || "",
     });
-    setFiles([]);
-    setFilePreviews([]);
-    setKeptExistingMedia(pkg.images || []);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFiles(prev => [...prev, ...newFiles]);
-
-    const newPreviews = newFiles.map(file => ({
-      url: URL.createObjectURL(file),
-      type: file.type.startsWith('video/') ? 'video' : 'image',
-    }));
-    setFilePreviews(prev => [...prev, ...newPreviews]);
-  };
-
-  const removeNewFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setFilePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeExistingMedia = (index) => {
-    setKeptExistingMedia(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = async (id) => {
     const confirmed = await Swal.fire({
-      title: 'Delete Package?',
-      text: 'This will permanently remove the package from the system.',
-      icon: 'warning',
+      title: "Delete Package?",
+      text: "This will permanently remove the package from the system.",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete',
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete",
     });
 
     if (!confirmed.isConfirmed) return;
 
     try {
-      const res = await protectedFetch(`${API_BASE}/api/packages/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete');
+      const res = await protectedFetch(`${API_BASE}/api/packages/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete");
       Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Package deleted successfully',
+        icon: "success",
+        title: "Success",
+        text: "Package deleted successfully",
         timer: 2000,
       });
       loadAllData();
     } catch (err) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.message || 'Failed to delete package',
+        icon: "error",
+        title: "Error",
+        text: err.message || "Failed to delete package",
       });
     }
   };
@@ -237,37 +224,48 @@ const PackagesManagement = () => {
   // Export to Excel
   const exportToExcel = () => {
     if (packages.length === 0) {
-      Swal.fire('Info', 'No packages to export', 'info');
+      Swal.fire("Info", "No packages to export", "info");
       return;
     }
 
-    const data = packages.map(pkg => ({
+    const data = packages.map((pkg) => ({
       ID: pkg.id,
-      'Package Name': pkg.name,
+      "Package Name": pkg.name,
       Type: pkg.package_type,
-      'Panel Brand': panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || '—',
-      'Panel Capacity (W)': panelCapacities.find(c => c.id === pkg.panel_capacity_id)?.wattage || '—',
-      'Panel Count': pkg.panel_count,
-      'Inverter Brand': inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || '—',
-      'Inverter Capacity (kW)': inverterCapacities.find(c => c.id === pkg.inverter_capacity_id)?.capacity_kw || '—',
-      Battery: pkg.battery_brand 
+      "Panel Brand":
+        panelBrands.find((b) => b.id === pkg.panel_brand_id)?.name || "—",
+      "Panel Capacity (W)":
+        panelCapacities.find((c) => c.id === pkg.panel_capacity_id)?.wattage ||
+        "—",
+      "Panel Count": pkg.panel_count,
+      "Inverter Brand":
+        inverterBrands.find((b) => b.id === pkg.inverter_brand_id)?.name || "—",
+      "Inverter Capacity (kW)":
+        inverterCapacities.find((c) => c.id === pkg.inverter_capacity_id)
+          ?.capacity_kw || "—",
+      Battery: pkg.battery_brand
         ? `${pkg.battery_brand} – ${pkg.battery_capacity_kwh} kWh (LKR ${Number(pkg.battery_price_lkr).toLocaleString()})`
-        : 'None',
-      'Full Price (LKR)': Number(pkg.full_price_lkr).toLocaleString(),
-      Description: pkg.description || '—',
-      'Created At': new Date(pkg.created_at).toLocaleString(),
-      'Updated At': pkg.updated_at ? new Date(pkg.updated_at).toLocaleString() : '—',
+        : "None",
+      "Full Price (LKR)": Number(pkg.full_price_lkr).toLocaleString(),
+      Description: pkg.description || "—",
+      "Created At": new Date(pkg.created_at).toLocaleString(),
+      "Updated At": pkg.updated_at
+        ? new Date(pkg.updated_at).toLocaleString()
+        : "—",
     }));
 
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Solar Packages');
+    XLSX.utils.book_append_sheet(wb, ws, "Solar Packages");
 
-    XLSX.writeFile(wb, `Solar_Packages_${new Date().toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(
+      wb,
+      `Solar_Packages_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
 
     Swal.fire({
-      icon: 'success',
-      title: 'Exported!',
+      icon: "success",
+      title: "Exported!",
       text: `Downloaded ${packages.length} packages`,
       timer: 2000,
     });
@@ -283,17 +281,24 @@ const PackagesManagement = () => {
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">Solar Packages Management</h1>
+      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">
+        Solar Packages Management
+      </h1>
 
       {/* Form */}
       <div className="bg-white rounded-2xl shadow-xl p-8 mb-12">
         <h2 className="text-3xl font-bold mb-8">
-          {editing ? 'Edit Solar Package' : 'Add New Solar Package'}
+          {editing ? "Edit Solar Package" : "Add New Solar Package"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           <div className="col-span-1 md:col-span-2 lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Package Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Package Name *
+            </label>
             <input
               placeholder="e.g. 5kW Residential Solar Package"
               value={form.name}
@@ -304,7 +309,9 @@ const PackagesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Package Type *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Package Type *
+            </label>
             <select
               value={form.package_type}
               onChange={(e) => {
@@ -312,7 +319,7 @@ const PackagesManagement = () => {
                 setForm({
                   ...form,
                   package_type: newType,
-                  battery_id: newType === 'On-Grid' ? '' : form.battery_id,
+                  battery_id: newType === "On-Grid" ? "" : form.battery_id,
                 });
               }}
               required
@@ -324,19 +331,25 @@ const PackagesManagement = () => {
             </select>
           </div>
 
-          {(form.package_type === 'Off-Grid' || form.package_type === 'Hybrid') && (
+          {(form.package_type === "Off-Grid" ||
+            form.package_type === "Hybrid") && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Battery *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Battery *
+              </label>
               <select
                 value={form.battery_id}
-                onChange={(e) => setForm({ ...form, battery_id: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, battery_id: e.target.value })
+                }
                 required
                 className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
               >
                 <option value="">Select Battery</option>
                 {batteries.map((bat) => (
                   <option key={bat.id} value={bat.id}>
-                    {bat.brand} – {bat.capacity_kwh} kWh (LKR {Number(bat.price_lkr).toLocaleString()})
+                    {bat.brand} – {bat.capacity_kwh} kWh (LKR{" "}
+                    {Number(bat.price_lkr).toLocaleString()})
                   </option>
                 ))}
               </select>
@@ -344,46 +357,58 @@ const PackagesManagement = () => {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Panel Brand *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Panel Brand *
+            </label>
             <select
               value={form.panel_brand_id}
-              onChange={(e) => setForm({ ...form, panel_brand_id: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, panel_brand_id: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
             >
               <option value="">Select Panel Brand</option>
               {panelBrands.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name} {b.country ? `(${b.country})` : ''}
+                  {b.name} {b.country ? `(${b.country})` : ""}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Panel Capacity (W) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Panel Capacity (W) *
+            </label>
             <select
               value={form.panel_capacity_id}
-              onChange={(e) => setForm({ ...form, panel_capacity_id: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, panel_capacity_id: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
             >
               <option value="">Select Panel Wattage</option>
               {panelCapacities.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.wattage}W {c.description ? `(${c.description})` : ''}
+                  {c.wattage}W {c.description ? `(${c.description})` : ""}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Panels *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Number of Panels *
+            </label>
             <input
               type="number"
               placeholder="e.g. 10"
               value={form.panel_count}
-              onChange={(e) => setForm({ ...form, panel_count: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, panel_count: e.target.value })
+              }
               min="1"
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
@@ -391,136 +416,78 @@ const PackagesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Inverter Brand *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Inverter Brand *
+            </label>
             <select
               value={form.inverter_brand_id}
-              onChange={(e) => setForm({ ...form, inverter_brand_id: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, inverter_brand_id: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
             >
               <option value="">Select Inverter Brand</option>
               {inverterBrands.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.name} {b.country ? `(${b.country})` : ''}
+                  {b.name} {b.country ? `(${b.country})` : ""}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Inverter Capacity *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Inverter Capacity *
+            </label>
             <select
               value={form.inverter_capacity_id}
-              onChange={(e) => setForm({ ...form, inverter_capacity_id: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, inverter_capacity_id: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 bg-white"
             >
               <option value="">Select Inverter Capacity</option>
               {inverterCapacities.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.capacity_kw} kW - {c.type} {c.description ? `(${c.description})` : ''}
+                  {c.capacity_kw} kW - {c.type}{" "}
+                  {c.description ? `(${c.description})` : ""}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Price (LKR) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Price (LKR) *
+            </label>
             <input
               type="number"
               step="0.01"
               placeholder="e.g. 850000"
               value={form.full_price_lkr}
-              onChange={(e) => setForm({ ...form, full_price_lkr: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, full_price_lkr: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <div className="md:col-span-2 lg:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Package Description (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Package Description (optional)
+            </label>
             <textarea
               placeholder="e.g. Includes installation, warranty, and monitoring"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
               rows={4}
               className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500"
             />
-          </div>
-
-          {/* Existing Media Preview (Edit Mode) */}
-          {editing && keptExistingMedia.length > 0 && (
-            <div className="md:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Existing Media</label>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
-                {keptExistingMedia.map((url, idx) => (
-                  <div key={idx} className="relative group">
-                    {url.toLowerCase().endsWith('.mp4') ? (
-                      <video
-                        src={url}
-                        className="w-full h-32 md:h-40 object-cover rounded-xl"
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={url}
-                        alt="Existing"
-                        className="w-full h-32 md:h-40 object-cover rounded-xl"
-                      />
-                    )}
-                    <button
-                      onClick={() => removeExistingMedia(idx)}
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 text-xs opacity-90 hover:opacity-100 transition"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* New Upload + Previews */}
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload New Images/Videos (optional)
-            </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,video/mp4"
-              onChange={handleFileChange}
-              className="w-full p-4 border border-gray-300 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-green-50 file:text-green-700"
-            />
-
-            {filePreviews.length > 0 && (
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-                {filePreviews.map((preview, idx) => (
-                  <div key={idx} className="relative group">
-                    {preview.type === 'video' ? (
-                      <video
-                        src={preview.url}
-                        className="w-full h-32 md:h-40 object-cover rounded-xl"
-                        controls
-                      />
-                    ) : (
-                      <img
-                        src={preview.url}
-                        alt="Preview"
-                        className="w-full h-32 md:h-40 object-cover rounded-xl"
-                      />
-                    )}
-                    <button
-                      onClick={() => removeNewFile(idx)}
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1.5 text-xs opacity-90 hover:opacity-100 transition"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="md:col-span-3 flex gap-6 mt-8">
@@ -528,10 +495,16 @@ const PackagesManagement = () => {
               type="submit"
               disabled={submitLoading}
               className={`flex-1 py-4 rounded-xl font-semibold text-white transition shadow-md ${
-                submitLoading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                submitLoading
+                  ? "bg-green-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
               }`}
             >
-              {submitLoading ? 'Saving...' : editing ? 'Update Package' : 'Add Package'}
+              {submitLoading
+                ? "Saving..."
+                : editing
+                  ? "Update Package"
+                  : "Add Package"}
             </button>
 
             {editing && (
@@ -558,12 +531,22 @@ const PackagesManagement = () => {
           disabled={loading || packages.length === 0}
           className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition ${
             loading || packages.length === 0
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-green-600 text-white hover:bg-green-700'
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-green-600 text-white hover:bg-green-700"
           }`}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
           Export to Excel
         </button>
@@ -579,42 +562,81 @@ const PackagesManagement = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Price (LKR)</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Panels</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Inverter</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Battery</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  ID
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Name
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Type
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Price (LKR)
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Panels
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Inverter
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Battery
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Description
+                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {packages.map((pkg) => (
                 <tr key={pkg.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{pkg.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{pkg.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 capitalize">{pkg.package_type}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {pkg.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    {pkg.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 capitalize">
+                    {pkg.package_type}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                     {Number(pkg.full_price_lkr).toLocaleString()} LKR
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {pkg.panel_count} × {panelCapacities.find(c => c.id === pkg.panel_capacity_id)?.wattage || '?'}W
+                    {pkg.panel_count} ×{" "}
+                    {panelCapacities.find((c) => c.id === pkg.panel_capacity_id)
+                      ?.wattage || "?"}
+                    W
                     <br />
-                    <small>{panelBrands.find(b => b.id === pkg.panel_brand_id)?.name || 'Unknown'}</small>
+                    <small>
+                      {panelBrands.find((b) => b.id === pkg.panel_brand_id)
+                        ?.name || "Unknown"}
+                    </small>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {inverterCapacities.find(c => c.id === pkg.inverter_capacity_id)?.capacity_kw || '?'} kW
+                    {inverterCapacities.find(
+                      (c) => c.id === pkg.inverter_capacity_id,
+                    )?.capacity_kw || "?"}{" "}
+                    kW
                     <br />
-                    <small>{inverterBrands.find(b => b.id === pkg.inverter_brand_id)?.name || 'Unknown'}</small>
+                    <small>
+                      {inverterBrands.find(
+                        (b) => b.id === pkg.inverter_brand_id,
+                      )?.name || "Unknown"}
+                    </small>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                     {pkg.battery_brand ? (
                       <>
                         {pkg.battery_brand} – {pkg.battery_capacity_kwh} kWh
                         <br />
-                        <small>LKR {Number(pkg.battery_price_lkr).toLocaleString()}</small>
+                        <small>
+                          LKR {Number(pkg.battery_price_lkr).toLocaleString()}
+                        </small>
                       </>
                     ) : (
                       <span className="text-gray-400">None</span>
