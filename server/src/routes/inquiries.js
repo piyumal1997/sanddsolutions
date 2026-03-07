@@ -2,9 +2,15 @@
 import express from 'express';
 import nodemailer from 'nodemailer';
 import pool from '../config/db.js';
+import { protect, restrictTo } from "../middleware/authMiddleware.js";
 import Joi from 'joi';
 
 const router = express.Router();
+
+// Protected admin routes
+router.use(protect);
+router.use(restrictTo('admin', 'manager'));
+
 
 const inquirySchema = Joi.object({
   name: Joi.string().min(2).max(255).required(),
@@ -200,10 +206,6 @@ router.post("/", async (req, res) => {
     });
   }
 });
-
-// Protected admin routes
-router.use(protect);
-router.use(restrictTo('admin', 'manager'));
 
 // GET /api/inquiries – list all inquiries (admin/manager only)
 router.get('/', async (req, res) => {

@@ -110,7 +110,6 @@ app.use(
     origin: [
       "https://sanddsolutions.lk",
       "https://www.sanddsolutions.lk",
-      "https://api.sanddsolutions.lk",
       "http://localhost:5173",
       "http://localhost:3000",
     ],
