@@ -17,6 +17,7 @@
     "@fortawesome/free-solid-svg-icons": "^7.2.0",
     "@fortawesome/react-fontawesome": "^3.2.0",
     "@heroicons/react": "^2.2.0",
+    "@payhere-js-sdk/client": "^1.0.4",
     "@supabase/supabase-js": "^2.91.0",
     "@tailwindcss/vite": "^4.1.18",
     "aos": "^2.3.4",
