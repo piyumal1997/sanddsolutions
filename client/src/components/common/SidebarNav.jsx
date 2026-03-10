@@ -27,6 +27,7 @@ const SidebarNav = ({ role }) => {
     { path: '/admin/projects', label: 'Projects', icon: faSun },
     { path: '/admin/packages', label: 'Solar Packages', icon: faBox },
     { path: '/admin/inquiries', label: 'Inquiries', icon: faMailBulk },
+    { path: '/admin/payments', label: 'Payments', icon: faMoneyBill },
     { path: '/admin/brands', label: 'Brands', icon: faHorseHead },
     { path: '/admin/capacities', label: 'Capacities', icon: faBolt },
     { path: '/admin/batteries', label: 'Batteries', icon: faBatteryFull },
