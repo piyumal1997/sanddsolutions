@@ -43,6 +43,9 @@ const BrandsManagement = lazy(() => import("./pages/Admin/BrandsManagement"));
 const CapacitiesManagement = lazy(() => import("./pages/Admin/CapacitiesManagement"));
 const BatteryManagement = lazy(() => import("./pages/Admin/BatteryManagement"));
 const InquiriesManagement = lazy(() => import("./pages/Admin/InquiriesManagement"));
+const PaymentsManagement = lazy(() => import("./pages/Admin/PaymentsManagement"));
+const Pay = lazy(() => import("./pages/Pay"));
+const ThankYou = lazy(() => import("./pages/ThankYou")); 
 
 // In your App.jsx or wherever AdminLayout is defined
 // In App.jsx – replace your AdminLayout with this
@@ -122,6 +125,8 @@ const router = createBrowserRouter([
           { path: "/contact", element: <Contact /> },
           { path: "/admin", element: <AdminLogin /> },
           { path: "/solar-calculator", element: <SolarCalculatorPage /> },
+          { path: "/pay/:unique_id", element: <Pay /> },
+          { path: "/thank-you", element: <ThankYou /> },
           { path: "*", element: <NotFound /> },
         ],
       },
@@ -136,6 +141,7 @@ const router = createBrowserRouter([
           { path: "/admin/brands", element: <BrandsManagement /> },
           { path: "/admin/capacities", element: <CapacitiesManagement /> },
           { path: '/admin/batteries', element: <BatteryManagement /> },
+          { path: '/admin/payments', element: <PaymentsManagement /> },
           { path: "/admin/*", element: <Navigate to="/admin/dashboard" replace /> },
         ],
       },
