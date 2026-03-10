@@ -36,7 +36,7 @@ jobs:
 
       - name: Install client dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         if: steps.cache-client.outputs.cache-hit != 'true'   
         # skip if cache hit
 
