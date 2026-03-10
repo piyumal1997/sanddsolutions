@@ -31,6 +31,36 @@ const linkSchema = Joi.object({
   send_email: Joi.boolean().default(false),
 });
 
+// Shared footer HTML (used in both emails)
+const COMPANY_LOGO_URL = 'https://www.sanddsolutions.lk/assets/sndlogo-F1IGRqvl.png'; // ← Replace with real logo URL
+
+const emailFooter = `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #4b5563;">
+    <tr>
+      <td align="center">
+        <img src="${COMPANY_LOGO_URL}" alt="S&D Solutions Logo" style="max-width: 180px; height: auto; margin-bottom: 16px;" />
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="color: #16a34a; font-weight: bold; font-size: 16px; margin-bottom: 8px;">
+        S&D Solutions (Pvt) Ltd
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="line-height: 1.6;">
+        <p style="margin: 4px 0;">Web: <a href="https://www.sanddsolutions.lk" style="color: #16a34a; text-decoration: none;">www.sanddsolutions.lk</a></p>
+        <p style="margin: 4px 0;">Email: <a href="mailto:info@sanddsolutions.lk" style="color: #16a34a; text-decoration: none;">info@sanddsolutions.lk</a></p>
+        <p style="margin: 4px 0;">Phone: +94 71 597 4895</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="margin-top: 16px; font-size: 12px; color: #6b7280;">
+        <p>© ${new Date().getFullYear()} S&D Solutions (Pvt) Ltd. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+`;
+
 // POST /api/payments/create-link – Create link + optional auto-send email
 router.post('/create-link', async (req, res) => {
   const { error } = linkSchema.validate(req.body);
