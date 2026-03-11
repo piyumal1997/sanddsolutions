@@ -20,6 +20,10 @@ import {
   resetInactivityTimer,
 } from "./utils/auth";
 
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
+
 const Home = lazy(() => import("./pages/Home"));
 const Solutions = lazy(() => import("./pages/Solutions"));
 const SolarEnergy = lazy(() => import("./pages/SolarEnergy"));
@@ -99,6 +103,7 @@ const Layout = () => (
   </ErrorBoundary>
 );
 
+
 // New wrapper to provide Auth context inside the router
 const RootWrapper = () => (
   <AuthProvider>
@@ -150,6 +155,16 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  useEffect(() => {
+  AOS.init({
+    once: true,
+    duration: 800,
+    easing: 'ease-out',
+    offset: 120,          // start animation a bit earlier
+    anchorPlacement: 'top-bottom',
+    mirror: false,
+  });
+}, []);
   return <RouterProvider router={router} fallbackElement={<LoadingSpinner />} />;
 }
 

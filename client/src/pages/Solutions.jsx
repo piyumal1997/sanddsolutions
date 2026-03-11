@@ -36,7 +36,7 @@ const Solutions = () => {
               <div 
                 key={division.id} 
                 className="group bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-                data-aos="fade-up"
+                // data-aos="fade-up"
               >
                 {/* Division Image/Header */}
                 <div className="relative h-48 overflow-hidden">

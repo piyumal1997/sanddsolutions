@@ -124,7 +124,7 @@ const About = () => {
               <div 
                 key={division.id} 
                 className="group bg-gray-50 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-                data-aos="fade-up"
+                // data-aos="fade-up"
               >
                 <div className="relative h-48 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
@@ -159,7 +159,7 @@ const About = () => {
               <div 
                 key={ach.id} 
                 className="bg-white rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-                data-aos="fade-up"
+                // data-aos="fade-up"
               >
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   {/* Use the icon map to convert string → actual icon */}

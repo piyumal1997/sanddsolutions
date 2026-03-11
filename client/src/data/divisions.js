@@ -13,7 +13,7 @@ export const divisions = [
     subtitle: 'Complete Solar Power Solutions',
     description: 'Focused on performance, reliability, and long-term savings.',
     details: 'Delivering complete solar power solutions for homes, businesses, and industries focused on performance, reliability, and long-term savings.',
-    image: [solar],
+    image: solar,
     link: '/solar-energy',
     icon: faSolarPanel,
     path: "/solar-energy",
@@ -58,7 +58,7 @@ export const divisions = [
       "Strategic process optimization and energy-efficient system integration."
     ],
     path: "/automation",
-    image: [automation],
+    image: automation,
     link: '/automation',
     icon: faMicrochip
   },
@@ -76,7 +76,7 @@ export const divisions = [
       "Technical advisory and dedicated on-site engineering support."
     ],
     path: "/engineering",
-    image: [heavyeng],
+    image: heavyeng,
     link: '/engineering',
     icon: faIndustry
   }
