@@ -18,7 +18,7 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  font-family: "Open Sans";
+  font-family: "Open Sans", sans-serif;
   font-weight: 500;
 }
 
@@ -48,4 +48,47 @@ html, body, #root {
 .animate-on-scroll.visible {
   animation: fadeUp 0.8s ease-out forwards;
   /* or just: opacity: 1; transform: translateY(0); */
+}
+
+/* Modern glass-like hover */
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shine {
+  animation: shine 1.5s infinite;
+}
+
+/*---------------------------------------------------------------*/
+
+/* Font family – thin and tall */
+.font-oswald {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 400; /* thin */
+}
+
+/* Marquee Animations */
+.animate-marquee-left {
+  animation: scroll-left linear infinite;
+}
+
+.animate-marquee-right {
+  animation: scroll-right linear infinite;
+}
+
+@keyframes scroll-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes scroll-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+/* Pause on hover (optional – great UX) */
+section:hover .animate-marquee-left,
+section:hover .animate-marquee-right {
+  animation-play-state: paused;
 }

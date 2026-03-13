@@ -37,6 +37,9 @@ const Contact = lazy(() => import("./pages/Contact"));
 const SolarCalculatorPage = lazy(() => import("./pages/SolarCalculatorPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy")); 
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy")); 
+const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
@@ -130,6 +133,9 @@ const router = createBrowserRouter([
           { path: "/contact", element: <Contact /> },
           { path: "/admin", element: <AdminLogin /> },
           { path: "/solar-calculator", element: <SolarCalculatorPage /> },
+          { path: "/refund-policy", element: <RefundPolicy /> },
+          { path: "/privacy-policy", element: <PrivacyPolicy /> },
+          { path: "/terms-and-conditions", element: <TermsConditions /> },
           { path: "/pay/:unique_id", element: <Pay /> },
           { path: "/thank-you", element: <ThankYou /> },
           { path: "*", element: <NotFound /> },

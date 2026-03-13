@@ -1,6 +1,7 @@
 // src/pages/Home.jsx (Updated & Complete)
 import DivisionCard from '../components/ui/DivisionCard';
 import { divisions } from '../data/divisions';
+import MovingTextMarquee from '../components/ui/MovingTextMarquee';
 
 import sand from '../assets/images/background/home-bg.jpg';
 
@@ -35,6 +36,15 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Moving Text Marquee – at the very bottom */}
+      {/* <MovingTextMarquee
+        line1="Solar & Energy Systems • Advanced Engineering & Automation • Cooling Solutions • Heavy & General Engineering"
+        line2="Hybrid & Off-Grid Systems | Eco-Friendly Energy for Homes & Businesses | Contact Us Today!"
+        speed={28}
+        bgColor="bg-white"
+        textColor="text-gray-900"
+      /> */}
     </>
   );
 };
