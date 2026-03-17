@@ -40,6 +40,8 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy")); 
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy")); 
 const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
+const CoolingSolutions = lazy(() => import("./pages/CoolingSolutions"));
+const BTUCalculatorPage = lazy(() => import("./pages/BTUCalculatorPage"));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
@@ -132,7 +134,9 @@ const router = createBrowserRouter([
           { path: "/about", element: <About /> },
           { path: "/contact", element: <Contact /> },
           { path: "/admin", element: <AdminLogin /> },
+          { path: "/cooling-solutions", element: <CoolingSolutions /> },
           { path: "/solar-calculator", element: <SolarCalculatorPage /> },
+          { path: "/btu-calculator", element: <BTUCalculatorPage /> },
           { path: "/refund-policy", element: <RefundPolicy /> },
           { path: "/privacy-policy", element: <PrivacyPolicy /> },
           { path: "/terms-and-conditions", element: <TermsConditions /> },

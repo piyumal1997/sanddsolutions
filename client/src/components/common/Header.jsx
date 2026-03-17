@@ -43,6 +43,8 @@ const Header = () => {
         return '/automation';
       case 'Heavy and General Engineering':
         return '/engineering';
+      case 'Cooling Solutions':
+        return '/cooling-solutions';
       default:
         return '/solutions'; // Fallback
     }

@@ -1,7 +1,6 @@
 // src/pages/Home.jsx (Updated & Complete)
 import DivisionCard from '../components/ui/DivisionCard';
 import { divisions } from '../data/divisions';
-import MovingTextMarquee from '../components/ui/MovingTextMarquee';
 
 import sand from '../assets/images/background/home-bg.jpg';
 
@@ -29,22 +28,13 @@ const Home = () => {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-12">Our Services</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {divisions.map(division => (
               <DivisionCard key={division.id} division={division} />
             ))}
           </div>
         </div>
       </section>
-
-      {/* Moving Text Marquee – at the very bottom */}
-      {/* <MovingTextMarquee
-        line1="Solar & Energy Systems • Advanced Engineering & Automation • Cooling Solutions • Heavy & General Engineering"
-        line2="Hybrid & Off-Grid Systems | Eco-Friendly Energy for Homes & Businesses | Contact Us Today!"
-        speed={28}
-        bgColor="bg-white"
-        textColor="text-gray-900"
-      /> */}
     </>
   );
 };

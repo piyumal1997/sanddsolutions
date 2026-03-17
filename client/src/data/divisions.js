@@ -1,9 +1,14 @@
-import { faSolarPanel, faMicrochip, faIndustry } from '@fortawesome/free-solid-svg-icons';
+import { faSolarPanel, faMicrochip, faIndustry, faSnowflake, faParagraph } from '@fortawesome/free-solid-svg-icons';
 
 //Images
 import solar from '../assets/images/solar.jpg';
 import automation from '../assets/images/automation.jpg';
 import heavyeng from '../assets/images/heavyeng.jpg';
+import cooling from '../assets/images/cooling.jpg';
+import industrySolar from '../assets/images/solar/industry_solar.png';
+import homeSolar from '../assets/images/solar/home_solar.png';
+import residentialCooling from '../assets/images/cooling/home_ac.png';
+import commercialCooling from '../assets/images/cooling/industry_ac.png';
 
 
 export const divisions = [
@@ -13,6 +18,8 @@ export const divisions = [
     subtitle: 'Complete Solar Power Solutions',
     description: 'Focused on performance, reliability, and long-term savings.',
     details: 'Delivering complete solar power solutions for homes, businesses, and industries focused on performance, reliability, and long-term savings.',
+    paragraph_one:'Embrace a sustainable future with S & D Solutions (Pvt) Ltd, Sri Lanka’s trusted partner for complete solar energy systems. Our Solar & Energy Systems division delivers high-performance, reliable, and cost-effective renewable solutions tailored to Sri Lanka’s abundant sunshine — empowering homes, businesses, and industries to slash electricity costs, gain energy independence, and build a greener nation.',
+    paragraph_two:'Powered by premium solar panels, advanced inverters, high-capacity batteries (for hybrid/off-grid), and expert end-to-end execution — from site assessment and design to installation, commissioning, and long-term maintenance — we ensure maximum energy yield and lasting value.',
     image: solar,
     link: '/solar-energy',
     icon: faSolarPanel,
@@ -30,6 +37,7 @@ export const divisions = [
           "Professional After-Sales: Cleaning, Inspection, and Repair"
         ],
         path: "/solar-home",
+        image: homeSolar
       },
       {
         id: 2,
@@ -40,6 +48,7 @@ export const divisions = [
           "Strategic Value & Sustainability : Our industrial solar solutions are a strategic investment designed to substantially mitigate escalating operational costs and shield businesses from energy price volatility. By implementing high-efficiency photovoltaic infrastructure, we empower organizations to achieve their ESG (Environmental, Social, and Governance) targets and demonstrate a clear commitment to corporate sustainability."
         ],
         path: "/solar-industry",
+        image: industrySolar
       }
     ]
   },
@@ -79,5 +88,46 @@ export const divisions = [
     image: heavyeng,
     link: '/engineering',
     icon: faIndustry
+  },
+  {
+    id: 4,
+    title: 'Cooling Solutions',
+    subtitle: 'Advanced Climate Control Systems',
+    description: 'Energy-efficient air conditioning for residential, commercial & industrial needs.',
+    details: 'At S & D Solutions (Pvt) Ltd, we deliver state-of-the-art cooling solutions tailored to Sri Lanka’s tropical climate — from inverter split & cassette units for homes to high-efficiency VRV/VRF and chilled water systems for commercial and industrial applications. Our focus is on comfort, energy savings, quiet operation, and long-term reliability.',
+    image: cooling,           // ← make sure this image exists
+    link: '/cooling-solutions',
+    icon: faSnowflake,        // nice match for cooling
+    path: "/cooling-solutions",
+    subdivisions: [
+      {
+        id: 1,
+        title: 'Residential Air Conditioning',
+        description: 'Comfortable, quiet and energy-efficient cooling solutions for homes and apartments.',
+        services: [
+          "Wall-mounted & floor-standing inverter split systems",
+          "Cassette & ducted units for villas and luxury apartments",
+          "Smart Wi-Fi enabled ACs with energy monitoring",
+          "Installation, annual maintenance contracts & refrigerant charging",
+          "Fast response breakdown service"
+        ],
+        path: "/residential-cooling",
+        image: residentialCooling
+      },
+      {
+        id: 2,
+        title: 'Commercial & Industrial Cooling',
+        description: 'High-capacity, reliable climate control for offices, factories, showrooms, hotels and data centers.',
+        services: [
+          "VRV / VRF multi-split systems for large buildings",
+          "Central chilled water systems & air handling units",
+          "Precision cooling for server rooms & medical facilities",
+          "End-to-end project execution: design, supply, installation & commissioning",
+          "BMS integration and remote monitoring capability"
+        ],
+        path: "/commercial-cooling",
+        image: commercialCooling
+      }
+    ]
   }
 ];

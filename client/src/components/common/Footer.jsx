@@ -39,7 +39,7 @@ const Footer = () => {
               <img
                 src={company.logo[0]}
                 alt={`${company.name} logo`}
-                className="h-16 md:h-20 w-auto object-contain"
+                className="h-16 md:h-20 w-auto object-contain p-2 bg-white rounded-xl shadow-lg overflow-hidden"
               />
             </div>
             <p className="text-gray-300 text-base leading-relaxed max-w-xs">
@@ -213,7 +213,7 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-green-700 mt-16 pt-10 text-center text-sm text-gray-400">
+        <div className="border-t border-green-700 mt-16 pt-10 text-center text-sm text-gray-200">
           <p>© {new Date().getFullYear()} {company.name}. All rights reserved.</p>
         </div>
       </div>
