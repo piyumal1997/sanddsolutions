@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 
 const ThankYouPayHere = () => {
   const [searchParams] = useSearchParams();
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [amount, setAmount] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState(null);       
+  const [amount, setAmount] = useState(null);        
 
   useEffect(() => {
     // PayHere usually sends these on successful return
