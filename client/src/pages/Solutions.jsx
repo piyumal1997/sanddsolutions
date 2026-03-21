@@ -32,7 +32,7 @@ const Solutions = () => {
       {/* Company Description - Modern Overlapping Circle Layout */}
       <section className="py-24 bg-gray-50 overflow-hidden">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-16 max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12 max-w-7xl mx-auto">
             {/* Left Content Column */}
             <div className="lg:w-1/2 order-2 lg:order-1">
               <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-8 leading-tight">
@@ -91,7 +91,7 @@ const Solutions = () => {
               <div className="absolute bottom-10 left-10 w-32 h-32 bg-green-600 rounded-full -z-10 animate-pulse"></div>
 
               {/* Main Large Image Circle */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 sm:w-[400px] sm:h-[400px] rounded-full overflow-hidden border-8 border-white shadow-2xl z-10">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 sm:w-[450px] sm:h-[450px] rounded-full overflow-hidden border-6 border-white shadow-2xl z-10">
                 <img
                   src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800"
                   alt="Engineering Office"
@@ -100,7 +100,7 @@ const Solutions = () => {
               </div>
 
               {/* Secondary Smaller Image Circle */}
-              <div className="absolute bottom-0 right-4 sm:right-10 w-40 h-40 sm:w-56 sm:h-56 rounded-full overflow-hidden border-[12px] border-white shadow-xl z-20">
+              <div className="absolute bottom-0 right-4 sm:right-10 w-40 h-40 sm:w-64 sm:h-64 rounded-full overflow-hidden border-[8px] border-white shadow-xl z-20">
                 <img
                   src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&q=80&w=600"
                   alt="Automation Tech"

@@ -12,6 +12,7 @@ import { divisions } from "../data/divisions";
 import { partners } from "../data/partners";
 
 import solarBg from "../assets/images/background/solar-bg.jpg";
+import solarContent from "../assets/images/solar/solar_content.png";
 
 const SolarEnergy = () => {
   const solarSubdivisions = divisions[0]?.subdivisions || [];
@@ -38,90 +39,75 @@ const SolarEnergy = () => {
         </div>
       </section>
 
-      {/* Solar Division Overview - Enhanced Layout */}
-      <section className="py-20 md:py-24 bg-gray-50 overflow-hidden">
+      {/* Solar Division Overview*/}
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-50 overflow-hidden">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 max-w-7xl mx-auto">
-            {/* Left Content Column */}
-            <div className="lg:w-1/2 order-2 lg:order-1">
-              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-8 leading-tight">
+          <div className="flex flex-col lg:flex-row items-center max-w-7xl mx-auto">
+            {/* Text Column */}
+            {/* Mobile: order-2 (text below image) | Desktop: order-1 (text left) */}
+            <div className="w-full lg:w-1/2 order-2 lg:order-1 mt-12 lg:mt-0 z-10 lg:pr-10 xl:pr-16">
+              <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
                 Solar Power Solutions <br />
                 <span className="text-green-600">
                   For a Sustainable Tomorrow
                 </span>
               </h2>
 
-              <div className="space-y-6 text-lg text-gray-700 leading-relaxed">
-                <p>{divisions[0]?.paragraph_one}</p>
+              <div className="space-y-6 text-base md:text-lg text-gray-600 leading-relaxed max-w-xl">
+                <p className="font-medium text-gray-700">
+                  {divisions[0]?.paragraph_one}
+                </p>
 
-                {/* Subdivisions highlight – using leaf icons instead of circles */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-10">
+                {/* Subdivisions Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                   {divisions[0]?.subdivisions?.map((sub) => (
-                    <div key={sub.id} className="flex items-start space-x-4">
-                      <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <div key={sub.id} className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                         <svg
-                          className="w-6 h-6 text-green-600"
+                          className="w-3 h-3 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth="2"
+                            strokeWidth="4"
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 text-xl mb-1">
-                          {sub.title}
-                        </h4>
-                      </div>
+                      <span className="font-semibold text-gray-800 text-sm md:text-base">
+                        {sub.title}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                <p className="mt-6">{divisions[0]?.paragraph_two}</p>
+                <p>{divisions[0]?.paragraph_two}</p>
               </div>
             </div>
 
-            {/* Right Image Composition Column – non-circular shapes */}
-            <div className="lg:w-1/2 order-1 lg:order-2 relative h-[400px] sm:h-[500px] lg:h-[600px] w-full">
-              {/* Background Decorative Leaf/Wave Shape (SVG - organic non-circle) */}
-              <div className="absolute -top-10 -right-10 w-80 h-80 text-green-100 opacity-40 hidden lg:block">
-                <svg
-                  viewBox="0 0 200 200"
-                  className="w-full h-full fill-current"
-                >
-                  <path
-                    d="M100,20 C140,20 170,50 170,100 C170,150 140,180 100,180 C60,180 30,150 30,100 C30,50 60,20 100,20 Z 
-                     M100,0 C44.77,0 0,44.77 0,100 C0,155.23 44.77,200 100,200 C155.23,200 200,155.23 200,100 
-                     C200,44.77 155.23,0 100,0 Z"
-                  />
-                </svg>
+            {/* Image Column */}
+            <div className="w-full lg:w-1/2 order-1 lg:order-2 relative h-[350px] sm:h-[500px] lg:h-[680px]">
+              <div className="absolute inset-0 diagonal-clip lg:-ml-16 shadow-2xl bg-gray-100 overflow-hidden">
+                <img
+                  src={solarContent}
+                  alt="Solar Panels Installation"
+                  className="w-full h-full object-cover object-center"
+                />
+                {/* Overlay to ensure the 25+ badge pops */}
+                <div className="absolute inset-0 bg-black/5 lg:bg-transparent"></div>
               </div>
 
-              {/* Solid Color Accent – leaf-like / irregular blob */}
-              <div className="absolute bottom-8 left-8 w-48 h-64 bg-gradient-to-br from-green-500 to-green-600 rounded-[40%_60%_70%_30%] opacity-70 animate-pulse -z-10"></div>
-
-              {/* Main Large Image – rounded but soft corners (not perfect circle) */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 sm:w-[440px] h-80 sm:h-[420px] rounded-3xl overflow-hidden border-8 border-white shadow-2xl z-10">
-                <img
-                  src="https://stanthonyssolar.lk/wp-content/uploads/2025/12/shutterstock_2670916287-700x467.jpg"
-                  alt="Commercial rooftop solar installation in Sri Lanka"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Secondary Smaller Image – angled/organic crop */}
-              <div className="absolute bottom-4 right-4 sm:bottom-12 sm:right-12 w-48 sm:w-72 h-48 sm:h-72 rounded-[30%_70%_40%_60%] overflow-hidden border-[10px] border-white shadow-xl z-20 transform rotate-3">
-                <img
-                  src="https://www.lankapropertyweb.com/property-news/wp-content/uploads/2023/11/balcony-power-station-8139984_1280.jpg"
-                  alt="Residential balcony / rooftop solar panels Sri Lanka"
-                  className="w-full h-full object-cover"
-                />
+              {/* Floating Badge - Positioned relative to the image container */}
+              <div className="absolute -bottom-8 right-2 md:bottom--6 md:right-4 bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 border-b-4 border-green-500">
+                <p className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-none">
+                  25+
+                </p>
+                <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
+                  Years Warranty
+                </p>
               </div>
             </div>
           </div>
@@ -131,7 +117,7 @@ const SolarEnergy = () => {
       {/* Subdivisions */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-green-900">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-18 text-green-900">
             Our Solar Services
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -139,7 +125,10 @@ const SolarEnergy = () => {
               <SubdivisionCard
                 key={subdivision.id || index}
                 subdivision={subdivision}
-                to={subdivision.path || (index === 0 ? '/solar-home' : '/solar-industry')}
+                to={
+                  subdivision.path ||
+                  (index === 0 ? "/solar-home" : "/solar-industry")
+                }
                 icon={index === 0 ? faHome : faIndustry}
               />
             ))}

@@ -1,8 +1,8 @@
 // src/components/ui/SolarSubdivisionCard.jsx
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import PropTypes from 'prop-types'; // optional – remove if not using
+import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import PropTypes from "prop-types"; // optional – remove if not using
 
 const SolarSubdivisionCard = ({ subdivision, to, icon }) => {
   const { title, description, image } = subdivision;
@@ -16,9 +16,7 @@ const SolarSubdivisionCard = ({ subdivision, to, icon }) => {
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
         style={{
-          backgroundImage: image
-            ? `url(${image})`
-            : 'none'
+          backgroundImage: image ? `url(${image})` : "none",
         }}
       />
 
@@ -31,7 +29,7 @@ const SolarSubdivisionCard = ({ subdivision, to, icon }) => {
       </div>
 
       {/* Main Content – bottom aligned */}
-      <div className="absolute inset-0 flex flex-col justify-end p-8 pb-12 text-white">
+      <div className="absolute inset-0 flex flex-col justify-center p-8 text-white">
         <h3 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight group-hover:text-green-300 transition-colors duration-300">
           {title}
         </h3>
@@ -39,8 +37,9 @@ const SolarSubdivisionCard = ({ subdivision, to, icon }) => {
         <p className="text-base md:text-lg opacity-90 mb-6 line-clamp-3 group-hover:opacity-100 transition-opacity duration-300">
           {description}
         </p>
-
-        {/* Call-to-action arrow – slides in on hover */}
+      </div>
+      {/* Call-to-action arrow – slides in on hover */}
+      <div className="absolute inset-0 flex flex-col justify-end p-8 pb-24 text-white">    
         <div className="flex items-center opacity-0 translate-x-[-20px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-400 ease-out">
           <span className="font-medium text-lg mr-3 group-hover:text-green-300 transition-colors">
             Explore Solutions

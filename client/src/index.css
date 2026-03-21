@@ -105,3 +105,15 @@ section:hover .animate-marquee-right {
 .animate-shine-fast {
   animation: shine-fast 1.2s ease-in-out;
 }
+
+/* Mobile: No clip or very subtle */
+.diagonal-clip {
+  clip-path: none;
+}
+
+/* Desktop: Full diagonal effect */
+@media (min-width: 1024px) {
+  .diagonal-clip {
+    clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 5% 100%);
+  }
+}

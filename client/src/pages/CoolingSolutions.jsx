@@ -6,14 +6,15 @@ import SubdivisionCard from '../components/ui/SubdivisionCard';
 import { divisions } from '../data/divisions';
 import { partners } from '../data/partners';
 
-import coolingBg from '../assets/images/background/cooling-bg.jpg'; // your hero background
+import coolingBg from '../assets/images/background/cooling-bg.jpg';
+import coolingContent from '../assets/images/cooling/cooling_content.png'; // ← ADD THIS IMAGE
 
 const CoolingSolutions = () => {
   // Find the Cooling division reliably
-  const coolingDivision = divisions.find(d => d.title === 'Cooling Solutions');
+  const division = divisions.find(d => d.title === 'Cooling Solutions');
 
-  // Safety fallback (should not be needed anymore)
-  if (!coolingDivision) {
+  // Safety fallback
+  if (!division) {
     return (
       <div className="container mx-auto px-6 py-20 text-center">
         <h1 className="text-4xl font-bold text-red-600">Division not found</h1>
@@ -22,11 +23,11 @@ const CoolingSolutions = () => {
     );
   }
 
-  const { title, subdivisions = [] } = coolingDivision;
+  const { title, subdivisions = [] } = division;
 
   return (
     <main className="pt-0">
-      {/* Hero Section */}
+      {/* Hero Section – unchanged (already matches style) */}
       <section className="relative h-96 pt-0">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed"
@@ -45,17 +46,82 @@ const CoolingSolutions = () => {
         </div>
       </section>
 
-      {/* Division Overview */}
-      <section className="py-16 md:py-20 bg-gray-100">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            At S & D Solutions (Pvt) Ltd, we provide cutting-edge cooling solutions tailored to Sri Lanka’s tropical climate. 
-            From energy-efficient inverter ACs for homes to powerful VRV/VRF and central chilled water systems for commercial & industrial spaces — we ensure optimal comfort, energy savings, and reliability.
-          </p>
+      {/* Enhanced Division Overview – exact same layout as SolarEnergy.jsx */}
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-50 overflow-hidden">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col lg:flex-row items-center max-w-7xl mx-auto">
+            {/* Text Column – mobile: below image | desktop: left */}
+            <div className="w-full lg:w-1/2 order-2 lg:order-1 mt-12 lg:mt-0 z-10 lg:pr-10 xl:pr-16">
+              <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+                Advanced Cooling Solutions <br />
+                <span className="text-green-600">
+                  Perfect Comfort in Sri Lanka’s Climate
+                </span>
+              </h2>
+
+              <div className="space-y-6 text-base md:text-lg text-gray-600 leading-relaxed max-w-xl">
+                <p className="font-medium text-gray-700">
+                  {division.paragraph_one}
+                </p>
+
+                {/* Subdivisions / Key Solutions Checkmark List */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                  {subdivisions.map((sub, index) => (
+                    <div key={sub.id || index} className="flex items-center space-x-3">
+                      <div className="flex-shrink-0 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="4"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <span className="font-semibold text-gray-800 text-sm md:text-base">
+                        {sub.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <p>
+                  {division.paragraph_two}
+                </p>
+              </div>
+            </div>
+
+            {/* Image Column – mobile: top | desktop: right */}
+            <div className="w-full lg:w-1/2 order-1 lg:order-2 relative h-[350px] sm:h-[500px] lg:h-[680px]">
+              <div className="absolute inset-0 diagonal-clip lg:-ml-16 shadow-2xl bg-gray-100 overflow-hidden">
+                <img
+                  src={coolingContent}
+                  alt="Air Conditioning & Cooling Systems Installation"
+                  className="w-full h-full object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-black/5 lg:bg-transparent"></div>
+              </div>
+
+              {/* Floating Badge */}
+              <div className="absolute -bottom-8 right-2 md:bottom-[-2rem] md:right-4 bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 border-b-4 border-green-500">
+                <p className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-none">
+                  15+
+                </p>
+                <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
+                  Years Experience
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Subdivisions / Solutions Cards */}
+      {/* Subdivisions / Solutions Cards – unchanged */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-green-900">
@@ -81,7 +147,7 @@ const CoolingSolutions = () => {
         </div>
       </section>
 
-      {/* BTU Calculator CTA */}
+      {/* BTU Calculator CTA – unchanged */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 text-green-900">
@@ -100,7 +166,7 @@ const CoolingSolutions = () => {
         </div>
       </section>
 
-      {/* Partners Carousel */}
+      {/* Partners Carousel – unchanged */}
       {partners?.length > 0 && (
         <section className="py-16 bg-white border-t border-gray-200 overflow-hidden">
           <div className="container mx-auto px-6 text-center">
