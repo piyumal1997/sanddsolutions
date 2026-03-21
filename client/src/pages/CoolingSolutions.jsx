@@ -110,10 +110,10 @@ const CoolingSolutions = () => {
               {/* Floating Badge */}
               <div className="absolute -bottom-8 right-2 md:bottom-[-2rem] md:right-4 bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-xl z-20 border-b-4 border-green-500">
                 <p className="text-2xl md:text-4xl font-extrabold text-gray-900 leading-none">
-                  15+
+                  10
                 </p>
                 <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">
-                  Years Experience
+                  Years Warranty
                 </p>
               </div>
             </div>
@@ -124,7 +124,7 @@ const CoolingSolutions = () => {
       {/* Subdivisions / Solutions Cards – unchanged */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-green-900">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-24 text-green-900">
             Our Cooling Solutions
           </h2>
 
