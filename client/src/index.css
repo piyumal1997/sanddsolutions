@@ -2,11 +2,13 @@
 
 @keyframes horizontal-scroll {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-60%); } /* -50% for duplicated list loop */
+  100% { transform: translateX(-50%); }
 }
 
 .animate-horizontal-scroll {
-  animation: horizontal-scroll 15s linear infinite; /* 30s speed – adjust for slower/faster */
+  display: flex;
+  width: max-content;
+  animation: horizontal-scroll 60s linear infinite; /* 30s speed – adjust for slower/faster */
 }
 
 .animate-horizontal-scroll:hover {

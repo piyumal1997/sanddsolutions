@@ -167,7 +167,7 @@ const CoolingSolutions = () => {
       </section>
 
       {/* Partners Carousel – unchanged */}
-      {partners?.length > 0 && (
+      {/* {partners?.length > 0 && (
         <section className="py-16 bg-white border-t border-gray-200 overflow-hidden">
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-3xl font-bold mb-12 text-green-900">
@@ -192,7 +192,7 @@ const CoolingSolutions = () => {
             </div>
           </div>
         </section>
-      )}
+      )} */}
     </main>
   );
 };
