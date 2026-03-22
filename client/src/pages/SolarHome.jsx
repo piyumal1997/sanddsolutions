@@ -29,10 +29,10 @@ const SolarHome = () => {
         <div className="absolute top-6 left-6 z-20">
           <Link
             to="/solar-energy"
-            className="flex items-center gap-3 bg-white/90 hover:bg-white text-green-700 px-6 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md"
+            className="flex items-center gap-3 bg-white/90 hover:bg-white text-green-700 px-3 py-3 rounded-full shadow-lg transition-all duration-300 backdrop-blur-md"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="text-lg" />
-            <span className="font-medium text-base">Back to Solar Energy</span>
+            {/* <span className="font-medium text-base">Back to Solar Energy</span> */}
           </Link>
         </div>
 
