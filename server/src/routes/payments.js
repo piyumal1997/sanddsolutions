@@ -187,7 +187,7 @@ router.post("/create-link", async (req, res) => {
 });
 
 // PUT /api/payments/:id/edit – Edit link + optional re-send email
-router.put("/:id/edit", async (req, res) => {
+router.put("/:id", async (req, res) => {
   const { error } = linkSchema.validate(req.body);
   if (error)
     return res
@@ -207,7 +207,13 @@ router.put("/:id/edit", async (req, res) => {
   try {
     const [result] = await pool.query(
       `UPDATE payment_links 
-       SET customer_name = ?, customer_email = ?, customer_phone = ?, amount = ?, description = ?, expiry_date = ?, updated_at = NOW()
+       SET customer_name = ?, 
+           customer_email = ?, 
+           customer_phone = ?, 
+           amount = ?, 
+           description = ?, 
+           expiry_date = ?, 
+           updated_at = NOW()
        WHERE id = ? AND status = 'pending' AND created_by = ?`,
       [
         customer_name,
@@ -218,34 +224,42 @@ router.put("/:id/edit", async (req, res) => {
         expiry_date || null,
         req.params.id,
         req.user.id,
-      ],
+      ]
     );
 
     if (result.affectedRows === 0) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: "Link not found or cannot be edited",
+        message: "Payment link not found or cannot be edited (only pending links can be updated)",
       });
     }
 
+    // Get updated unique_id to generate fresh link
     const [linkRow] = await pool.query(
       "SELECT unique_id FROM payment_links WHERE id = ?",
-      [req.params.id],
+      [req.params.id]
     );
-    const link = `https://sanddsolutions.lk/pay/${linkRow[0].unique_id}`;
 
-    if (send_email)
+    const updatedLink = `https://sanddsolutions.lk/pay/${linkRow[0].unique_id}`;
+
+    // Smart email sending (if email or amount changed)
+    if (send_email && customer_email) {
       sendPaymentEmail(
         customer_email,
         customer_name,
-        link,
+        updatedLink,
         amount,
-        description,
+        description
       ).catch(console.error);
+    }
 
-    res.json({ success: true, message: "Link updated" });
+    res.json({ 
+      success: true, 
+      message: "Payment link updated successfully",
+      link: updatedLink 
+    });
   } catch (err) {
-    console.error("Edit link error:", err.message);
+    console.error("Update link error:", err.message);
     res.status(500).json({ success: false, message: "Failed to update link" });
   }
 });
