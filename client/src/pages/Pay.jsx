@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
+import sandlogo from '../assets/images/sndlogo.png';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const Pay = () => {
@@ -18,7 +20,6 @@ const Pay = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Load payment link details (public endpoint)
   useEffect(() => {
     fetchPaymentInfo();
   }, [unique_id]);
@@ -46,7 +47,6 @@ const Pay = () => {
     }
   };
 
-  // Submit customer details and redirect to PayHere
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -64,7 +64,7 @@ const Pay = () => {
         throw new Error(data.message || 'Failed to process your details');
       }
 
-      // Redirect to PayHere checkout
+      // Redirect to PayHere
       window.location.href = `https://www.payhere.lk/pay/${data.merchant_id}/${data.order_id}?amount=${data.amount}&currency=${data.currency}&hash=${data.hash}&return_url=https://sanddsolutions.lk/thank-you-payhere&cancel_url=https://sanddsolutions.lk/payment-notify&notify_url=https://api.sanddsolutions.lk/api/payments/notify`;
 
     } catch (err) {
@@ -94,10 +94,23 @@ const Pay = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-12 text-center">
-          <h1 className="text-4xl font-bold mb-3">Complete Your Payment</h1>
-          <p className="text-xl opacity-90">S&D Solutions (Pvt) Ltd</p>
+        
+        {/* Header with Logo on Left */}
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-10 flex items-center gap-6">
+          {/* Logo in Circle */}
+          <div className="w-20 h-20 bg-white rounded-full p-2 flex-shrink-0 shadow-lg">
+            <img 
+              src={sandlogo} 
+              alt="S&D Solutions Logo" 
+              className="w-full h-full object-contain rounded-full"
+            />
+          </div>
+
+          {/* Text Content */}
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl font-bold">Complete Your Payment</h1>
+            <p className="text-lg opacity-90 mt-1">S & D Solutions (Pvt) Ltd</p>
+          </div>
         </div>
 
         {/* Payment Info */}
