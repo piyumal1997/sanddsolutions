@@ -405,7 +405,7 @@ async function sendPaymentEmail(email, name, link, amount, description) {
   });
 
   await transporter.sendMail({
-    from: `"S&D Solutions" <noreply@sanddsolutions.lk>`,
+    from: `"S & D Solutions" <noreply@sanddsolutions.lk>`,
     to: email,
     subject: "Your Payment Link from S&D Solutions",
     html: `
