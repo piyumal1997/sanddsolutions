@@ -17,6 +17,47 @@ const limiter = rateLimit({
 });
 router.use(limiter);
 
+// ====================== PUBLIC ROUTES (NO AUTH) ======================
+
+// GET /api/payments/:unique_id/info  → Customer can view payment details
+router.get('/:unique_id/info', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, unique_id, customer_name, amount, description, status, expiry_date, created_at 
+       FROM payment_links 
+       WHERE unique_id = ?`,
+      [req.params.unique_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Payment link not found" });
+    }
+
+    const link = rows[0];
+
+    // Check if expired
+    if (link.expiry_date && new Date(link.expiry_date) < new Date()) {
+      await pool.query("UPDATE payment_links SET status = 'expired' WHERE id = ?", [link.id]);
+      return res.status(410).json({ success: false, message: "This payment link has expired" });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        unique_id: link.unique_id,
+        customer_name: link.customer_name,
+        amount: link.amount,
+        description: link.description,
+        status: link.status,
+        expiry_date: link.expiry_date,
+      }
+    });
+  } catch (err) {
+    console.error("Info endpoint error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to load payment info" });
+  }
+});
+
 // Protected routes for admin only (changed restrictTo to 'admin')
 router.use(protect);
 router.use(restrictTo('admin'));

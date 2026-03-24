@@ -182,8 +182,8 @@ const PaymentsManagement = () => {
           <tbody className="divide-y divide-gray-200">
             {links.map((link) => (
               <tr key={link.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-4 text-sm text-gray-500">{link.id}</td>
-                <td className="px-6 py-4 font-medium text-gray-900">{link.customer_name}</td>
+                <td className="px-6 py-4 text-gray-500">{link.id}</td>
+                <td className="px-6 py-4 text-gray-900">{link.customer_name}</td>
                 <td className="px-6 py-4 text-gray-600">{link.customer_email}</td>
                 <td className="px-6 py-4 text-gray-700">{link.amount.toLocaleString()} LKR</td>
                 <td className="px-6 py-4 text-gray-600 capitalize">{link.status}</td>

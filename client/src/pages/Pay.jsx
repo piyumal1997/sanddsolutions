@@ -1,119 +1,179 @@
 // src/pages/Pay.jsx
 import { useState, useEffect } from 'react';
-import { Payhere, Customer, CurrencyType, PayhereCheckout, CheckoutParams } from '@payhere-js-sdk/client';
-import Swal from 'sweetalert2';
 import { useParams, useNavigate } from 'react-router-dom';
-import { publicFetch } from '../utils/auth';
+import Swal from 'sweetalert2';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 const Pay = () => {
   const { unique_id } = useParams();
   const navigate = useNavigate();
+
+  const [paymentInfo, setPaymentInfo] = useState(null);
   const [form, setForm] = useState({
     address: '',
     phone: '',
     email: '',
   });
-  const [paymentInfo, setPaymentInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Load payment link details (public endpoint)
   useEffect(() => {
     fetchPaymentInfo();
-  }, []);
+  }, [unique_id]);
 
   const fetchPaymentInfo = async () => {
     try {
-      const res = await publicFetch(`${API_BASE}/api/payments/${unique_id}/info`);
-      const data = await res.json();
-      if (data.success) {
-        setPaymentInfo(data);
-        setForm(prev => ({ ...prev, customer_name: data.customer_name || '' }));
-      } else {
-        Swal.fire('Error', 'Invalid link', 'error');
-        navigate('/');
+      const res = await fetch(`${API_BASE}/api/payments/${unique_id}/info`);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Invalid or expired payment link');
       }
+
+      const data = await res.json();
+      setPaymentInfo(data.data);
     } catch (err) {
-      console.error('Failed to fetch payment info:', err);
-      Swal.fire('Error', 'Failed to load', 'error');
-      navigate('/');
+      Swal.fire({
+        icon: 'error',
+        title: 'Link Invalid',
+        text: err.message || 'This payment link is invalid or has expired.',
+        confirmButtonText: 'Go Home',
+      }).then(() => navigate('/'));
     } finally {
       setLoading(false);
     }
   };
 
+  // Submit customer details and redirect to PayHere
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+
     try {
-      const res = await publicFetch(`${API_BASE}/api/payments/${unique_id}/submit-form`, {
+      const res = await fetch(`${API_BASE}/api/payments/${unique_id}/submit-form`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
+
       const data = await res.json();
-      if (!data.success) throw new Error('Failed');
 
-      const customer = new Customer({
-        first_name: paymentInfo.customer_name,
-        last_name: '',
-        phone: form.phone,
-        email: form.email,
-        address: form.address,
-        city: 'Colombo',
-        country: 'Sri Lanka',
-      });
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to process your details');
+      }
 
-      const checkoutParams = new CheckoutParams({
-        returnUrl: 'https://sanddsolutions.lk/thank-you?order_id=' + unique_id,
-        cancelUrl: 'https://sanddsolutions.lk/cancel?order_id=' + unique_id,
-        notifyUrl: `${API_BASE}/api/payments/notify`,
-        orderId: unique_id,
-        itemTitle: 'Payment for ' + paymentInfo.customer_name,
-        currency: CurrencyType.LKR,
-        amount: data.amount,
-        hash: data.hash,
-      });
+      // Redirect to PayHere checkout
+      window.location.href = `https://www.payhere.lk/pay/${data.merchant_id}/${data.order_id}?amount=${data.amount}&currency=${data.currency}&hash=${data.hash}&return_url=https://sanddsolutions.lk/thank-you-payhere&cancel_url=https://sanddsolutions.lk/payment-notify&notify_url=https://api.sanddsolutions.lk/api/payments/notify`;
 
-      Payhere.checkout(checkoutParams, customer, (payment) => {
-        Swal.fire('Success', 'Payment completed', 'success');
-        navigate('/thank-you?order_id=' + unique_id);
-      }, (err) => {
-        Swal.fire('Error', err, 'error');
-      });
     } catch (err) {
-      Swal.fire('Error', err.message, 'error');
+      Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text: err.message || 'Something went wrong. Please try again.',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-xl text-gray-700">Loading payment details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!paymentInfo) return null;
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Pay LKR {paymentInfo.amount}</h1>
-      <form onSubmit={handleSubmit} className="grid gap-4">
-        <input
-          placeholder="Address (optional)"
-          value={form.address}
-          onChange={(e) => setForm({ ...form, address: e.target.value })}
-          className="p-4 border rounded-xl"
-        />
-        <input
-          placeholder="Phone (optional)"
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          className="p-4 border rounded-xl"
-        />
-        <input
-          type="email"
-          placeholder="Email (optional)"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="p-4 border rounded-xl"
-        />
-        <button type="submit" className="bg-green-600 text-white py-4 rounded-xl">
-          Proceed to Payment
-        </button>
-      </form>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-12 text-center">
+          <h1 className="text-4xl font-bold mb-3">Complete Your Payment</h1>
+          <p className="text-xl opacity-90">S&D Solutions (Pvt) Ltd</p>
+        </div>
+
+        {/* Payment Info */}
+        <div className="p-8 md:p-12">
+          <div className="bg-green-50 border border-green-200 p-6 rounded-2xl mb-10">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-600">Customer Name</span>
+              <span className="font-semibold text-gray-900">{paymentInfo.customer_name}</span>
+            </div>
+            <div className="flex justify-between items-center text-3xl font-bold text-green-700">
+              <span>Total Amount</span>
+              <span>LKR {Number(paymentInfo.amount).toLocaleString()}</span>
+            </div>
+            {paymentInfo.description && (
+              <p className="text-gray-600 mt-4 text-sm">{paymentInfo.description}</p>
+            )}
+          </div>
+
+          {/* Customer Details Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
+              <textarea
+                required
+                rows={3}
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 resize-y"
+                placeholder="Full address including city"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="071 234 5678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="your@email.com"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className={`w-full py-5 rounded-2xl font-semibold text-xl transition-all mt-8 ${
+                submitting
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white shadow-lg'
+              }`}
+            >
+              {submitting ? 'Processing...' : `Pay LKR ${Number(paymentInfo.amount).toLocaleString()}`}
+            </button>
+          </form>
+        </div>
+
+        <div className="px-8 py-6 text-center text-sm text-gray-500 border-t">
+          Secured by PayHere • Your payment information is encrypted
+        </div>
+      </div>
     </div>
   );
 };

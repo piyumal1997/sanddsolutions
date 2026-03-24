@@ -144,8 +144,8 @@ const router = createBrowserRouter([
           { path: "/terms-and-conditions", element: <TermsConditions /> },
           { path: "/pay/:unique_id", element: <Pay /> },
           { path: "/thank-you", element: <ThankYou /> },
-          { path: "/thank-you-payhere", element: <ThankYouPayHere /> },
-          { path: "/payment-notify", element: <PaymentNotify /> },
+          { path: "/thank-you-payhere", element: <ThankYouPayHere /> }, //From PayHere redirections
+          { path: "/payment-notify", element: <PaymentNotify /> }, //From PayHere redirections
           { path: "*", element: <NotFound /> },
         ],
       },
