@@ -37,7 +37,6 @@ const PaymentsManagement = () => {
     }
   };
 
-  // Populate form when editing starts
   const handleEdit = (link) => {
     setEditing(link);
     setForm({
@@ -46,8 +45,8 @@ const PaymentsManagement = () => {
       customer_phone: link.customer_phone || '',
       amount: link.amount || '',
       description: link.description || '',
-      expiry_date: link.expiry_date ? link.expiry_date.split('T')[0] : '', // format for date input
-      send_email: false, // don't auto-send when editing
+      expiry_date: link.expiry_date ? link.expiry_date.split('T')[0] : '',
+      send_email: false,
     });
   };
 
@@ -72,7 +71,9 @@ const PaymentsManagement = () => {
       Swal.fire({
         icon: 'success',
         title: editing ? 'Link Updated' : 'Link Created',
-        text: editing ? 'Payment link has been updated successfully.' : 'Link created/updated. Copy and share: ' + (data.link || ''),
+        text: editing 
+          ? 'Payment link has been updated successfully.' 
+          : 'Link created successfully. Copy and share the link.',
         timer: 2500,
       });
 
@@ -101,11 +102,23 @@ const PaymentsManagement = () => {
     Swal.fire('Copied!', 'Payment link copied to clipboard. You can now share via WhatsApp or SMS.', 'success');
   };
 
-  if (loading) return <div className="p-10 text-center">Loading payment links...</div>;
+  // Consistent Loading Spinner (same style as PackagesManagement)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-6"></div>
+          <p className="text-xl text-gray-700 font-medium">Loading payment links...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-4xl font-bold mb-10 text-gray-900">Payment Links Management</h1>
+      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">
+        Payment Links Management
+      </h1>
 
       {/* Form */}
       <div className="bg-white p-8 rounded-3xl shadow-xl mb-12">
@@ -167,7 +180,9 @@ const PaymentsManagement = () => {
               onChange={(e) => setForm({ ...form, send_email: e.target.checked })}
               className="w-5 h-5 accent-green-600"
             />
-            <label htmlFor="send_email" className="text-gray-700">Send link via email automatically</label>
+            <label htmlFor="send_email" className="text-gray-700">
+              Send link via email automatically
+            </label>
           </div>
 
           <div className="md:col-span-2 flex gap-4 mt-6">
@@ -224,8 +239,12 @@ const PaymentsManagement = () => {
                     {link.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-gray-600">{link.expiry_date ? new Date(link.expiry_date).toLocaleDateString() : 'No expiry'}</td>
-                <td className="px-6 py-4 text-gray-600">{new Date(link.created_at).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-gray-600">
+                  {link.expiry_date ? new Date(link.expiry_date).toLocaleDateString() : 'No expiry'}
+                </td>
+                <td className="px-6 py-4 text-gray-600">
+                  {new Date(link.created_at).toLocaleDateString()}
+                </td>
                 <td className="px-6 py-4">
                   <button 
                     onClick={() => copyLink(`https://sanddsolutions.lk/pay/${link.unique_id}`)}
