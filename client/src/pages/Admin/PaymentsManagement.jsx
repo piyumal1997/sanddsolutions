@@ -180,6 +180,7 @@ const PaymentsManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
+            {console.log(links)} {/* Debugging line to check links data */}
             {links.map((link) => (
               <tr key={link.id} className="hover:bg-gray-50 transition">
                 <td className="px-6 py-4 text-gray-500">{link.id}</td>
