@@ -222,12 +222,10 @@ router.put("/:id/edit", async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Link not found or cannot be edited",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Link not found or cannot be edited",
+      });
     }
 
     const [linkRow] = await pool.query(
@@ -255,20 +253,44 @@ router.put("/:id/edit", async (req, res) => {
 // GET /api/payments – List all payment links
 router.get("/", async (req, res) => {
   try {
-    const [links] = await pool.query(
-      `SELECT pl.*, u.email as created_by_email, pd.*
-       FROM payment_links pl
-       LEFT JOIN users u ON pl.created_by = u.id
-       LEFT JOIN payment_details pd ON pl.id = pd.payment_link_id
-       ORDER BY pl.created_at DESC`,
-    );
+    const [links] = await pool.query(`
+      SELECT 
+        pl.id,
+        pl.unique_id,
+        pl.customer_name,
+        pl.customer_email,
+        pl.customer_phone,
+        pl.amount,
+        pl.description,
+        pl.created_by,
+        pl.status,
+        pl.expiry_date,
+        pl.link_sent,
+        pl.created_at,
+        pl.updated_at,
+        u.email AS created_by_email,
+        pd.address,
+        pd.phone,
+        pd.email AS customer_submitted_email,
+        pd.payhere_order_id,
+        pd.payhere_status_code,
+        pd.completed_at
+      FROM payment_links pl
+      LEFT JOIN users u ON pl.created_by = u.id
+      LEFT JOIN payment_details pd ON pl.id = pd.payment_link_id
+      ORDER BY pl.created_at DESC
+    `);
 
-    res.json({ success: true, data: links });
+    res.json({
+      success: true,
+      data: links,
+    });
   } catch (err) {
     console.error("List payments error:", err.message);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to load payments" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to load payments",
+    });
   }
 });
 
