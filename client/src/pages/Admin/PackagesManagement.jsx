@@ -273,11 +273,11 @@ const PackagesManagement = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600"></div>
-        <p className="text-xl text-gray-700 font-medium">
-            Loading solar packages...
-          </p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-6"></div>
+          <p className="text-xl text-gray-700">Loading solar packages...</p>
+        </div>
       </div>
     );
   }
