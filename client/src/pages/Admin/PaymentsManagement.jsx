@@ -27,7 +27,6 @@ const PaymentsManagement = () => {
     setLoading(true);
     try {
       const res = await protectedFetch(`${API_BASE}/api/payments`);
-      if (!res.ok) throw new Error("Failed to load");
       const data = await res.json();
       setLinks(data.data || []);
     } catch (err) {
@@ -53,34 +52,63 @@ const PaymentsManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      const url = editing
-        ? `${API_BASE}/api/payments/${editing.id}/edit`
-        : `${API_BASE}/api/payments/create-link`;
+    const isEditing = !!editing;
+    const url = isEditing
+      ? `${API_BASE}/api/payments/${editing.id}`
+      : `${API_BASE}/api/payments/create-link`;
 
+    const method = isEditing ? "PUT" : "POST";
+
+    // Smart email decision
+    let shouldSendEmail = form.send_email;
+
+    if (isEditing) {
+      const emailChanged = form.customer_email !== editing.customer_email;
+      const amountChanged = Number(form.amount) !== Number(editing.amount);
+
+      if (emailChanged || amountChanged) {
+        shouldSendEmail = true;
+
+        // Show small notification
+        Swal.fire({
+          icon: "info",
+          title: "Email will be sent",
+          text: "Updated payment link will be emailed because email or amount was changed.",
+          timer: 2500,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+        });
+      }
+    }
+
+    try {
       const res = await protectedFetch(url, {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, send_email: shouldSendEmail }),
       });
 
-      if (!res.ok) throw new Error("Failed");
-
-      const data = await res.json();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(
+          errData.message || (isEditing ? "Update failed" : "Create failed"),
+        );
+      }
 
       Swal.fire({
         icon: "success",
-        title: editing ? "Link Updated" : "Link Created",
-        text: editing
+        title: isEditing ? "Link Updated" : "Link Created",
+        text: isEditing
           ? "Payment link has been updated successfully."
-          : "Link created successfully. Copy and share the link.",
-        timer: 2500,
+          : "New payment link created successfully.",
+        timer: 2000,
       });
 
       loadLinks();
       resetForm();
     } catch (err) {
-      Swal.fire("Error", err.message || "Something went wrong", "error");
+      Swal.fire("Error", err.message || "Operation failed", "error");
     }
   };
 
@@ -99,22 +127,15 @@ const PaymentsManagement = () => {
 
   const copyLink = (link) => {
     navigator.clipboard.writeText(link);
-    Swal.fire(
-      "Copied!",
-      "Payment link copied to clipboard. You can now share via WhatsApp or SMS.",
-      "success",
-    );
+    Swal.fire("Copied!", "Payment link copied to clipboard.", "success");
   };
 
-  // Consistent Loading Spinner (same style as PackagesManagement)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-6"></div>
-          <p className="text-xl text-gray-700 font-medium">
-            Loading payment links...
-          </p>
+          <p className="text-xl text-gray-700">Loading payment links...</p>
         </div>
       </div>
     );
@@ -122,7 +143,7 @@ const PaymentsManagement = () => {
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-4xl lg:text-5xl font-bold mb-10 text-gray-900">
+      <h1 className="text-4xl font-bold mb-10 text-gray-900">
         Payment Links Management
       </h1>
 
@@ -223,7 +244,7 @@ const PaymentsManagement = () => {
         </form>
       </div>
 
-      {/* Payment Links Table */}
+      {/* Table */}
       <h2 className="text-3xl font-bold mb-8">
         All Payment Links ({links.length})
       </h2>
@@ -258,14 +279,12 @@ const PaymentsManagement = () => {
           <tbody className="divide-y divide-gray-200">
             {links.map((link) => (
               <tr key={link.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-4 font-medium">
-                  {link.customer_name || "—"}
-                </td>
+                <td className="px-6 py-4 font-medium">{link.customer_name}</td>
                 <td className="px-6 py-4 text-gray-600">
-                  {link.customer_email || "—"}
+                  {link.customer_email}
                 </td>
                 <td className="px-6 py-4 font-semibold text-green-700">
-                  LKR {Number(link.amount || 0).toLocaleString()}
+                  LKR {Number(link.amount).toLocaleString()}
                 </td>
                 <td className="px-6 py-4 capitalize">
                   <span
@@ -277,7 +296,7 @@ const PaymentsManagement = () => {
                           : "bg-yellow-100 text-yellow-700"
                     }`}
                   >
-                    {link.status || "pending"}
+                    {link.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-gray-600">
