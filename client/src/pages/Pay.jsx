@@ -13,7 +13,9 @@ const Pay = () => {
 
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [form, setForm] = useState({
-    address: "",
+    address_line1: "",
+    city: "",
+    country: "Sri Lanka", // Default to Sri Lanka
     phone: "",
     email: "",
   });
@@ -27,12 +29,7 @@ const Pay = () => {
   const fetchPaymentInfo = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/payments/${unique_id}/info`);
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Invalid or expired payment link");
-      }
-
+      if (!res.ok) throw new Error("Invalid or expired payment link");
       const data = await res.json();
       setPaymentInfo(data.data);
     } catch (err) {
@@ -67,7 +64,7 @@ const Pay = () => {
         throw new Error(data.message || "Failed to process your details");
       }
 
-      // Auto submit to PayHere
+      // Auto-submit to PayHere
       const payhereForm = document.createElement("form");
       payhereForm.method = "POST";
       payhereForm.action = data.checkout_url;
@@ -109,18 +106,15 @@ const Pay = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
-        {/* Header with Logo on Left */}
+        {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-10 flex items-center gap-6">
-          {/* Logo in Circle */}
           <div className="w-20 h-20 bg-white rounded-full p-2 flex-shrink-0 shadow-lg">
             <img
               src={sandlogo}
-              alt="S&D Solutions Logo"
+              alt="S&D Solutions"
               className="w-full h-full object-contain rounded-full"
             />
           </div>
-
-          {/* Text Content */}
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-bold">
               Complete Your Payment
@@ -129,7 +123,6 @@ const Pay = () => {
           </div>
         </div>
 
-        {/* Payment Info */}
         <div className="p-8 md:p-12">
           <div className="bg-green-50 border border-green-200 p-6 rounded-2xl mb-10">
             <div className="flex justify-between items-center mb-4">
@@ -142,14 +135,8 @@ const Pay = () => {
               <span>Total Amount</span>
               <span>LKR {Number(paymentInfo.amount).toLocaleString()}</span>
             </div>
-            {paymentInfo.description && (
-              <p className="text-gray-600 mt-4 text-sm">
-                {paymentInfo.description}
-              </p>
-            )}
           </div>
 
-          {/* Customer Details Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -157,12 +144,75 @@ const Pay = () => {
               </label>
               <textarea
                 required
-                rows={3}
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 resize-y"
-                placeholder="Full address including city"
+                rows={2}
+                value={form.address_line1}
+                onChange={(e) =>
+                  setForm({ ...form, address_line1: e.target.value })
+                }
+                className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="Street address / House number"
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City *
+                </label>
+                <input
+                  required
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Colombo / Kandy / Galle"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Country *
+                </label>
+                <select
+                  required
+                  value={form.country}
+                  onChange={(e) =>
+                    setForm({ ...form, country: e.target.value })
+                  }
+                  className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="Sri Lanka">Sri Lanka</option>
+                  <option value="India">India</option>
+                  <option value="Bangladesh">Bangladesh</option>
+                  <option value="Pakistan">Pakistan</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Malaysia">Malaysia</option>
+
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
+                  <option value="Netherlands">Netherlands</option>
+                  <option value="Sweden">Sweden</option>
+                  <option value="Norway">Norway</option>
+
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+
+                  <option value="Australia">Australia</option>
+                  <option value="New Zealand">New Zealand</option>
+
+                  <option value="United Arab Emirates">
+                    United Arab Emirates
+                  </option>
+                  <option value="Saudi Arabia">Saudi Arabia</option>
+                  <option value="Qatar">Qatar</option>
+
+                  <option value="South Africa">South Africa</option>
+                  <option value="Kenya">Kenya</option>
+                  <option value="Nigeria">Nigeria</option>
+                  
+                  <option value="Other">Other</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
