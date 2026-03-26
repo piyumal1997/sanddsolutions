@@ -80,8 +80,8 @@ const Pay = () => {
         payhereForm.appendChild(input);
       });
 
-      document.body.appendChild(formEl);
-      formEl.submit(); // This redirects to PayHere properly
+      document.body.appendChild(payhereForm);
+      payhereForm.submit();
     } catch (err) {
       Swal.fire({
         icon: "error",
