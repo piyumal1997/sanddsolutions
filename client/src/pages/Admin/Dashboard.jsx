@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -24,14 +24,19 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  // Only load data when user is fully authenticated
   useEffect(() => {
+    if (!user || authLoading) return;
+
     loadDashboardData();
 
     const interval = setInterval(loadDashboardData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user, authLoading]); // ← Important: depend on user & authLoading
 
   const loadDashboardData = async () => {
+    if (!user) return;
+
     setLoading(true);
     try {
       // Fetch stats
@@ -49,11 +54,14 @@ const Dashboard = () => {
         setUnreadCount((data || []).filter((n) => !n.is_read).length);
       }
     } catch (err) {
-      if (!err.message?.includes("401")) {
+      console.error("Dashboard load error:", err);
+      // Only show error if it's not authentication related
+      if (!err.message?.includes("401") && !err.message?.includes("token")) {
         Swal.fire({
           icon: "error",
           title: "Dashboard Error",
-          text: "Could not load some data. Please refresh.",
+          text: "Could not load some data. Please refresh the page.",
+          timer: 3000,
         });
       }
     } finally {
@@ -63,32 +71,30 @@ const Dashboard = () => {
 
   const markAsRead = async (id) => {
     try {
-      await protectedFetch(
-        `${API_BASE}/api/notifications/${id}/read`,
-        {
-          method: "PUT",
-        },
-      );
+      await protectedFetch(`${API_BASE}/api/notifications/${id}/read`, {
+        method: "PUT",
+      });
       loadDashboardData();
-    } catch {}
+    } catch (err) {}
   };
 
   const deleteNotification = async (id) => {
     try {
-      await protectedFetch(
-        `${API_BASE}/api/notifications/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
+      await protectedFetch(`${API_BASE}/api/notifications/${id}`, {
+        method: "DELETE",
+      });
       loadDashboardData();
-    } catch {}
+    } catch (err) {}
   };
 
-  if (loading) {
+  // Show loading while auth is still initializing
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 mx-auto mb-6"></div>
+          <p className="text-xl text-gray-700">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -132,7 +138,7 @@ const Dashboard = () => {
 
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 text-lg">
-                  No notifications
+                  No notifications yet
                 </div>
               ) : (
                 notifications.map((notif) => (
@@ -142,11 +148,16 @@ const Dashboard = () => {
                       !notif.is_read ? "bg-blue-50" : ""
                     }`}
                   >
-                    <div className="flex-1" onClick={() => !notif.is_read && markAsRead(notif.id)}>
+                    <div
+                      className="flex-1"
+                      onClick={() => !notif.is_read && markAsRead(notif.id)}
+                    >
                       <p className="font-bold text-gray-900 text-md">
                         {notif.title}
                       </p>
-                      <p className="text-gray-700 text-sm mt-1">{notif.message}</p>
+                      <p className="text-gray-700 text-sm mt-1">
+                        {notif.message}
+                      </p>
                       <p className="text-xs text-gray-500 mt-2">
                         {new Date(notif.created_at).toLocaleString()}
                       </p>
@@ -206,22 +217,36 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link to="/admin/projects" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+        <Link
+          to="/admin/projects"
+          className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
+        >
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Projects</h3>
           <p className="text-gray-600">Manage showcase entries</p>
         </Link>
 
-        <Link to="/admin/packages" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Solar Packages</h3>
+        <Link
+          to="/admin/packages"
+          className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">
+            Solar Packages
+          </h3>
           <p className="text-gray-600">Manage solar packages</p>
         </Link>
 
-        <Link to="/admin/brands" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+        <Link
+          to="/admin/brands"
+          className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
+        >
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Brands</h3>
           <p className="text-gray-600">Manage brands</p>
         </Link>
 
-        <Link to="/admin/capacities" className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200">
+        <Link
+          to="/admin/capacities"
+          className="block bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 border border-gray-200"
+        >
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Capacities</h3>
           <p className="text-gray-600">Manage capacities</p>
         </Link>
