@@ -90,13 +90,14 @@ router.post("/:unique_id/submit-form", async (req, res) => {
   if (!address || !phone || !email) {
     return res.status(400).json({
       success: false,
-      message: "Address, phone, and email are required",
+      message: "Address, phone number, and email are required",
     });
   }
 
   try {
+    // Get the payment link
     const [linkRows] = await pool.query(
-      `SELECT id, amount, status, expiry_date, customer_name 
+      `SELECT id, customer_name, amount, status, expiry_date 
        FROM payment_links 
        WHERE unique_id = ?`,
       [req.params.unique_id]
@@ -114,7 +115,7 @@ router.post("/:unique_id/submit-form", async (req, res) => {
     if (link.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: "This link has already been processed",
+        message: "This payment link has already been processed or cancelled",
       });
     }
 
@@ -126,15 +127,15 @@ router.post("/:unique_id/submit-form", async (req, res) => {
       });
     }
 
-    // Save customer details
+    // Save customer submitted details
     await pool.query(
       `INSERT INTO payment_details 
        (payment_link_id, customer_name, address, phone, email, created_at)
        VALUES (?, ?, ?, ?, ?, NOW())`,
-      [link.id, link.customer_name, address, phone, email]
+      [link.id, link.customer_name, address.trim(), phone.trim(), email.trim()]
     );
 
-    // Prepare PayHere checkout data
+    // Generate PayHere hash and data
     const merchant_id = process.env.PAYHERE_MERCHANT_ID;
     const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET;
 
@@ -142,24 +143,18 @@ router.post("/:unique_id/submit-form", async (req, res) => {
       .createHash("md5")
       .update(
         merchant_id +
-          req.params.unique_id +
-          Number(link.amount).toFixed(2) +
-          "LKR" +
-          crypto
-            .createHash("md5")
-            .update(merchant_secret)
-            .digest("hex")
-            .toUpperCase()
+        req.params.unique_id +
+        Number(link.amount).toFixed(2) +
+        "LKR" +
+        crypto.createHash("md5").update(merchant_secret).digest("hex").toUpperCase()
       )
       .digest("hex")
       .toUpperCase();
 
     res.json({
       success: true,
-      // Use sandbox for testing, live for production
-      // checkout_url: "https://sandbox.payhere.lk/pay/checkout",   // ← Change to live when ready
+      // checkout_url: "https://sandbox.payhere.lk/pay/checkout", 
       checkout_url: "https://www.payhere.lk/pay/checkout",
-
       form_data: {
         merchant_id: merchant_id,
         return_url: "https://sanddsolutions.lk/thank-you-payhere",
@@ -177,13 +172,13 @@ router.post("/:unique_id/submit-form", async (req, res) => {
         address: address,
         custom_1: req.params.unique_id,
         hash: hash,
-      },
+      }
     });
   } catch (err) {
     console.error("Submit form error:", err.message);
     res.status(500).json({
       success: false,
-      message: "Failed to process your request. Please try again.",
+      message: "Failed to process your request. Please try again later.",
     });
   }
 });
