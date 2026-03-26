@@ -83,6 +83,111 @@ router.get("/:unique_id/info", async (req, res) => {
   }
 });
 
+// PUBLIC: Customer submits their details before going to PayHere
+router.post("/:unique_id/submit-form", async (req, res) => {
+  const { address, phone, email } = req.body;
+
+  if (!address || !phone || !email) {
+    return res.status(400).json({
+      success: false,
+      message: "Address, phone, and email are required",
+    });
+  }
+
+  try {
+    const [linkRows] = await pool.query(
+      `SELECT id, amount, status, expiry_date, customer_name 
+       FROM payment_links 
+       WHERE unique_id = ?`,
+      [req.params.unique_id]
+    );
+
+    if (linkRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment link not found",
+      });
+    }
+
+    const link = linkRows[0];
+
+    if (link.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "This link has already been processed",
+      });
+    }
+
+    if (link.expiry_date && new Date(link.expiry_date) < new Date()) {
+      await pool.query("UPDATE payment_links SET status = 'expired' WHERE id = ?", [link.id]);
+      return res.status(410).json({
+        success: false,
+        message: "This payment link has expired",
+      });
+    }
+
+    // Save customer details
+    await pool.query(
+      `INSERT INTO payment_details 
+       (payment_link_id, customer_name, address, phone, email, created_at)
+       VALUES (?, ?, ?, ?, ?, NOW())`,
+      [link.id, link.customer_name, address, phone, email]
+    );
+
+    // Prepare PayHere checkout data
+    const merchant_id = process.env.PAYHERE_MERCHANT_ID;
+    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET;
+
+    const hash = crypto
+      .createHash("md5")
+      .update(
+        merchant_id +
+          req.params.unique_id +
+          Number(link.amount).toFixed(2) +
+          "LKR" +
+          crypto
+            .createHash("md5")
+            .update(merchant_secret)
+            .digest("hex")
+            .toUpperCase()
+      )
+      .digest("hex")
+      .toUpperCase();
+
+    res.json({
+      success: true,
+      // Use sandbox for testing, live for production
+      // checkout_url: "https://sandbox.payhere.lk/pay/checkout",   // ← Change to live when ready
+      checkout_url: "https://www.payhere.lk/pay/checkout",
+
+      form_data: {
+        merchant_id: merchant_id,
+        return_url: "https://sanddsolutions.lk/thank-you-payhere",
+        cancel_url: "https://sanddsolutions.lk/payment-cancel",
+        notify_url: "https://api.sanddsolutions.lk/api/payments/notify",
+
+        order_id: req.params.unique_id,
+        items: "Solar Package Payment",
+        amount: Number(link.amount).toFixed(2),
+        currency: "LKR",
+        first_name: link.customer_name.split(" ")[0] || "Customer",
+        last_name: link.customer_name.split(" ").slice(1).join(" ") || "",
+        email: email,
+        phone: phone,
+        address: address,
+        custom_1: req.params.unique_id,
+        hash: hash,
+      },
+    });
+  } catch (err) {
+    console.error("Submit form error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to process your request. Please try again.",
+    });
+  }
+});
+
 // Protected routes for admin only (changed restrictTo to 'admin')
 router.use(protect);
 router.use(restrictTo("admin"));
@@ -362,88 +467,6 @@ router.post("/notify", async (req, res) => {
   } catch (err) {
     console.error("Webhook error:", err.message);
     res.status(500).send();
-  }
-});
-
-// POST /api/payments/:unique_id/submit-form – Customer submits
-router.post("/:unique_id/submit-form", async (req, res) => {
-  const { address, phone, email } = req.body;
-
-  try {
-    const [link] = await pool.query(
-      `SELECT id, amount, status, expiry_date FROM payment_links WHERE unique_id = ?`,
-      [req.params.unique_id],
-    );
-
-    if (link.length === 0 || link[0].status !== "pending") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid or completed link" });
-    }
-
-    if (link[0].expiry_date && new Date(link[0].expiry_date) < new Date()) {
-      await pool.query(
-        'UPDATE payment_links SET status = "expired" WHERE id = ?',
-        [link[0].id],
-      );
-      return res.status(400).json({ success: false, message: "Link expired" });
-    }
-
-    await pool.query(
-      `INSERT INTO payment_details 
-       (payment_link_id, customer_name, address, phone, email, created_at)
-       VALUES ((SELECT customer_name FROM payment_links WHERE id = ?), ?, ?, ?, ?, NOW())`,
-      [link[0].id, address, phone, email],
-    );
-
-    const merchant_id = process.env.PAYHERE_MERCHANT_ID;
-    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET;
-    const hash = crypto
-      .createHash("md5")
-      .update(
-        merchant_id +
-          req.params.unique_id +
-          link[0].amount.toFixed(2) +
-          "LKR" +
-          crypto
-            .createHash("md5")
-            .update(merchant_secret)
-            .digest("hex")
-            .toUpperCase(),
-      )
-      .digest("hex")
-      .toUpperCase();
-
-    res.json({
-      success: true,
-      checkout_url: "https://www.payhere.lk/pay/checkout",        // Live
-      // checkout_url: "https://sandbox.payhere.lk/pay/checkout", // ← Uncomment for testing (Sandbox)
-
-      form_data: {
-        merchant_id: merchant_id,
-        return_url: "https://sanddsolutions.lk/thank-you-payhere",
-        cancel_url: "https://sanddsolutions.lk/payment-cancel",
-        notify_url: "https://api.sanddsolutions.lk/api/payments/notify",
-
-        order_id: req.params.unique_id,
-        items: description || "Payment for order",   // You can improve this
-        amount: link[0].amount.toFixed(2),
-        currency: "LKR",
-
-        first_name: paymentInfo?.customer_name?.split(" ")[0] || "Customer", 
-        last_name: paymentInfo?.customer_name?.split(" ").slice(1).join(" ") || "",
-        email: email,
-        phone: phone,
-        address: address,
-
-        // Recommended optional fields
-        custom_1: req.params.unique_id,
-        hash: hash,
-      }
-    });
-  } catch (err) {
-    console.error("Submit form error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to submit form" });
   }
 });
 

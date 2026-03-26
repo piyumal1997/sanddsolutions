@@ -67,18 +67,17 @@ const Pay = () => {
         throw new Error(data.message || "Failed to process your details");
       }
 
-      // === NEW: Create and auto-submit a hidden form ===
-      const formEl = document.createElement("form");
-      formEl.method = "POST";
-      formEl.action = data.checkout_url; // sandbox or live
+      // Auto submit to PayHere
+      const payhereForm = document.createElement("form");
+      payhereForm.method = "POST";
+      payhereForm.action = data.checkout_url;
 
-      // Add all hidden fields
       Object.entries(data.form_data).forEach(([key, value]) => {
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = key;
         input.value = value;
-        formEl.appendChild(input);
+        payhereForm.appendChild(input);
       });
 
       document.body.appendChild(formEl);
