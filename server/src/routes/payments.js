@@ -88,10 +88,7 @@ router.post("/:unique_id/submit-form", async (req, res) => {
   const { address, phone, email } = req.body;
 
   if (!address || !phone || !email) {
-    return res.status(400).json({
-      success: false,
-      message: "Address, phone number, and email are required",
-    });
+    return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
   try {
@@ -113,25 +110,23 @@ router.post("/:unique_id/submit-form", async (req, res) => {
     }
 
     if (link.expiry_date && new Date(link.expiry_date) < new Date()) {
-      await pool.query("UPDATE payment_links SET status = 'expired' WHERE id = ?", [link.id]);
       return res.status(410).json({ success: false, message: "This payment link has expired" });
     }
 
     // Save customer details
     await pool.query(
-      `INSERT INTO payment_details 
-       (payment_link_id, customer_name, address, phone, email, created_at)
+      `INSERT INTO payment_details (payment_link_id, customer_name, address, phone, email, created_at)
        VALUES (?, ?, ?, ?, ?, NOW())`,
       [link.id, link.customer_name, address.trim(), phone.trim(), email.trim()]
     );
 
-    // === CORRECT HASH GENERATION (Exact match with PayHere Java example) ===
-    const merchant_id = process.env.PAYHERE_MERCHANT_ID.trim();
-    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET.trim();
+    const merchant_id = process.env.PAYHERE_MERCHANT_ID?.trim();
+    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET?.trim();
     const order_id = req.params.unique_id;
-    const amountFormatted = Number(link.amount).toFixed(2);   // Must be exactly 2 decimals
+    const amountFormatted = Number(link.amount).toFixed(2);   // Must be string with 2 decimals
     const currency = "LKR";
 
+    // Correct Hash Generation (Exact match with PayHere example)
     const secretHash = crypto
       .createHash("md5")
       .update(merchant_secret)
@@ -144,9 +139,9 @@ router.post("/:unique_id/submit-form", async (req, res) => {
       .digest("hex")
       .toUpperCase();
 
-    // === USE SANDBOX FOR TESTING ===
     res.json({
       success: true,
+      // === SANDBOX USED FOR TESTING ===
       // checkout_url: "https://sandbox.payhere.lk/pay/checkout",   // ← Sandbox (Very Important for testing)
       checkout_url: "https://www.payhere.lk/pay/checkout",    // ← Only use this when going LIVE
 
@@ -157,11 +152,11 @@ router.post("/:unique_id/submit-form", async (req, res) => {
         notify_url: "https://api.sanddsolutions.lk/api/payments/notify",
 
         order_id: order_id,
-        items: "Solar Package Payment",
+        items: "Solar Package Payment",           // ← This field is required
         amount: amountFormatted,
         currency: currency,
-        first_name: (link.customer_name || "Customer").split(" ")[0],
-        last_name: (link.customer_name || "").split(" ").slice(1).join(" ") || "",
+        first_name: (link.customer_name || "Customer").split(" ")[0] || "Customer",
+        last_name: (link.customer_name || "").split(" ").slice(1).join(" ") || "Customer",
         email: email,
         phone: phone,
         address: address,
@@ -171,10 +166,7 @@ router.post("/:unique_id/submit-form", async (req, res) => {
     });
   } catch (err) {
     console.error("Submit form error:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to process your request. Please try again later.",
-    });
+    res.status(500).json({ success: false, message: "Failed to process your request" });
   }
 });
 
