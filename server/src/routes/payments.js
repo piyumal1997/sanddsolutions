@@ -110,12 +110,10 @@ router.post("/:unique_id/submit-form", async (req, res) => {
     const link = linkRows[0];
 
     if (link.status !== "pending") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "This link has already been processed",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "This link has already been processed",
+      });
     }
 
     if (link.expiry_date && new Date(link.expiry_date) < new Date()) {
@@ -394,17 +392,34 @@ router.get("/", async (req, res) => {
         pl.created_at,
         pl.updated_at,
         u.email AS created_by_email,
+        
+        -- Take only the latest customer submission if multiple exist
         pd.address_line1,
         pd.city,
         pd.country,
-        pd.phone,
+        pd.phone AS customer_phone_submitted,
         pd.email AS customer_submitted_email,
         pd.payhere_order_id,
         pd.payhere_status_code,
         pd.completed_at
+
       FROM payment_links pl
       LEFT JOIN users u ON pl.created_by = u.id
-      LEFT JOIN payment_details pd ON pl.id = pd.payment_link_id
+      LEFT JOIN (
+        SELECT 
+          payment_link_id,
+          address_line1,
+          city,
+          country,
+          phone,
+          email,
+          payhere_order_id,
+          payhere_status_code,
+          completed_at,
+          ROW_NUMBER() OVER (PARTITION BY payment_link_id ORDER BY created_at DESC) as rn
+        FROM payment_details
+      ) pd ON pl.id = pd.payment_link_id AND pd.rn = 1
+      
       ORDER BY pl.created_at DESC
     `);
 
