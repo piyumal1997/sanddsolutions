@@ -95,7 +95,6 @@ router.post("/:unique_id/submit-form", async (req, res) => {
   }
 
   try {
-    // Get the payment link
     const [linkRows] = await pool.query(
       `SELECT id, customer_name, amount, status, expiry_date 
        FROM payment_links 
@@ -104,30 +103,21 @@ router.post("/:unique_id/submit-form", async (req, res) => {
     );
 
     if (linkRows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment link not found",
-      });
+      return res.status(404).json({ success: false, message: "Payment link not found" });
     }
 
     const link = linkRows[0];
 
     if (link.status !== "pending") {
-      return res.status(400).json({
-        success: false,
-        message: "This payment link has already been processed or cancelled",
-      });
+      return res.status(400).json({ success: false, message: "This link has already been processed" });
     }
 
     if (link.expiry_date && new Date(link.expiry_date) < new Date()) {
       await pool.query("UPDATE payment_links SET status = 'expired' WHERE id = ?", [link.id]);
-      return res.status(410).json({
-        success: false,
-        message: "This payment link has expired",
-      });
+      return res.status(410).json({ success: false, message: "This payment link has expired" });
     }
 
-    // Save customer submitted details
+    // Save customer details
     await pool.query(
       `INSERT INTO payment_details 
        (payment_link_id, customer_name, address, phone, email, created_at)
@@ -135,42 +125,47 @@ router.post("/:unique_id/submit-form", async (req, res) => {
       [link.id, link.customer_name, address.trim(), phone.trim(), email.trim()]
     );
 
-    // Generate PayHere hash and data
-    const merchant_id = process.env.PAYHERE_MERCHANT_ID;
-    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET;
+    // === CORRECT HASH GENERATION (Exact match with PayHere Java example) ===
+    const merchant_id = process.env.PAYHERE_MERCHANT_ID.trim();
+    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET.trim();
+    const order_id = req.params.unique_id;
+    const amountFormatted = Number(link.amount).toFixed(2);   // Must be exactly 2 decimals
+    const currency = "LKR";
 
-    const hash = crypto
+    const secretHash = crypto
       .createHash("md5")
-      .update(
-        merchant_id +
-        req.params.unique_id +
-        Number(link.amount).toFixed(2) +
-        "LKR" +
-        crypto.createHash("md5").update(merchant_secret).digest("hex").toUpperCase()
-      )
+      .update(merchant_secret)
       .digest("hex")
       .toUpperCase();
 
+    const hash = crypto
+      .createHash("md5")
+      .update(merchant_id + order_id + amountFormatted + currency + secretHash)
+      .digest("hex")
+      .toUpperCase();
+
+    // === USE SANDBOX FOR TESTING ===
     res.json({
       success: true,
-      // checkout_url: "https://sandbox.payhere.lk/pay/checkout", 
-      checkout_url: "https://www.payhere.lk/pay/checkout",
+      // checkout_url: "https://sandbox.payhere.lk/pay/checkout",   // ← Sandbox (Very Important for testing)
+      checkout_url: "https://www.payhere.lk/pay/checkout",    // ← Only use this when going LIVE
+
       form_data: {
         merchant_id: merchant_id,
         return_url: "https://sanddsolutions.lk/thank-you-payhere",
         cancel_url: "https://sanddsolutions.lk/payment-cancel",
         notify_url: "https://api.sanddsolutions.lk/api/payments/notify",
 
-        order_id: req.params.unique_id,
+        order_id: order_id,
         items: "Solar Package Payment",
-        amount: Number(link.amount).toFixed(2),
-        currency: "LKR",
-        first_name: link.customer_name.split(" ")[0] || "Customer",
-        last_name: link.customer_name.split(" ").slice(1).join(" ") || "",
+        amount: amountFormatted,
+        currency: currency,
+        first_name: (link.customer_name || "Customer").split(" ")[0],
+        last_name: (link.customer_name || "").split(" ").slice(1).join(" ") || "",
         email: email,
         phone: phone,
         address: address,
-        custom_1: req.params.unique_id,
+        custom_1: order_id,
         hash: hash,
       }
     });
