@@ -1,27 +1,22 @@
-// src/pages/ThankYouPayHere.jsx
-import { Link, useSearchParams } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { useEffect, useState } from 'react';
+// src/pages/ThankYouPayHere.jsx  (Improved version)
+import { Link, useSearchParams } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheckCircle, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { useEffect, useState } from "react";
 
 const ThankYouPayHere = () => {
   const [searchParams] = useSearchParams();
-  const [orderId, setOrderId] = useState(null);       
-  const [amount, setAmount] = useState(null);        
+  const [orderId] = useState(
+    searchParams.get("order_id") || searchParams.get("orderId") || null,
+  );
+  const [amount] = useState(
+    searchParams.get("payhere_amount") || searchParams.get("amount") || null,
+  );
 
+  // Auto redirect after 8 seconds
   useEffect(() => {
-    // PayHere usually sends these on successful return
-    const receivedOrderId = searchParams.get('order_id') || searchParams.get('orderId');
-    const receivedAmount = searchParams.get('payhere_amount') || searchParams.get('amount');
-
-    setOrderId(receivedOrderId);
-    setAmount(receivedAmount);
-  }, [searchParams]);
-
-  useEffect(() => {
-    // Auto-redirect to home after 8 seconds (optional)
     const timer = setTimeout(() => {
-      window.location.href = '/';
+      window.location.href = "/";
     }, 8000);
 
     return () => clearTimeout(timer);
@@ -36,9 +31,7 @@ const ThankYouPayHere = () => {
             icon={faCheckCircle}
             className="text-8xl md:text-9xl mb-6 animate-pulse"
           />
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Thank You!
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Thank You!</h1>
           <p className="text-xl md:text-2xl opacity-90">
             Your payment was successful
           </p>
@@ -60,7 +53,9 @@ const ThankYouPayHere = () => {
               {amount && (
                 <p className="flex justify-between">
                   <span>Amount Paid:</span>
-                  <span className="font-medium">LKR {Number(amount).toLocaleString()}</span>
+                  <span className="font-medium">
+                    LKR {Number(amount).toLocaleString()}
+                  </span>
                 </p>
               )}
               <p className="flex justify-between">
@@ -71,8 +66,9 @@ const ThankYouPayHere = () => {
           </div>
 
           <p className="text-xl text-gray-700 mb-10">
-            We have received your payment and your order is now being processed.<br />
-            You will receive a confirmation email shortly with full details.
+            We have received your payment and your order is now being processed.
+            <br />
+            You will receive a confirmation email shortly.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center">

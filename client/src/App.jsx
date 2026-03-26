@@ -42,8 +42,14 @@ const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
 const CoolingSolutions = lazy(() => import("./pages/CoolingSolutions"));
 const BTUCalculatorPage = lazy(() => import("./pages/BTUCalculatorPage"));
+
+//PayHere Site Required Pages
+const Pay = lazy(() => import("./pages/Pay"));
 const ThankYouPayHere = lazy(() => import("./pages/ThankYouPayHere"));
 const PaymentNotify = lazy(() => import("./pages/PaymentNotify"));
+const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
+
+
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
@@ -55,8 +61,6 @@ const CapacitiesManagement = lazy(() => import("./pages/Admin/CapacitiesManageme
 const BatteryManagement = lazy(() => import("./pages/Admin/BatteryManagement"));
 const InquiriesManagement = lazy(() => import("./pages/Admin/InquiriesManagement"));
 const PaymentsManagement = lazy(() => import("./pages/Admin/PaymentsManagement"));
-const Pay = lazy(() => import("./pages/Pay"));
-const ThankYou = lazy(() => import("./pages/ThankYou")); 
 
 // In your App.jsx or wherever AdminLayout is defined
 // In App.jsx – replace your AdminLayout with this
@@ -143,9 +147,9 @@ const router = createBrowserRouter([
           { path: "/privacy-policy", element: <PrivacyPolicy /> },
           { path: "/terms-and-conditions", element: <TermsConditions /> },
           { path: "/pay/:unique_id", element: <Pay /> },
-          { path: "/thank-you", element: <ThankYou /> },
           { path: "/thank-you-payhere", element: <ThankYouPayHere /> }, //From PayHere redirections
           { path: "/payment-notify", element: <PaymentNotify /> }, //From PayHere redirections
+          { path: "/payment-cancel", element: <PaymentCancel /> }, //From PayHere redirections
           { path: "*", element: <NotFound /> },
         ],
       },

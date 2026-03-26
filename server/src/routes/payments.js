@@ -416,11 +416,30 @@ router.post("/:unique_id/submit-form", async (req, res) => {
 
     res.json({
       success: true,
-      hash,
-      merchant_id,
-      amount: link[0].amount.toFixed(2),
-      currency: "LKR",
-      order_id: req.params.unique_id,
+      checkout_url: "https://www.payhere.lk/pay/checkout",        // Live
+      // checkout_url: "https://sandbox.payhere.lk/pay/checkout", // ← Uncomment for testing (Sandbox)
+
+      form_data: {
+        merchant_id: merchant_id,
+        return_url: "https://sanddsolutions.lk/thank-you-payhere",
+        cancel_url: "https://sanddsolutions.lk/payment-cancel",
+        notify_url: "https://api.sanddsolutions.lk/api/payments/notify",
+
+        order_id: req.params.unique_id,
+        items: description || "Payment for order",   // You can improve this
+        amount: link[0].amount.toFixed(2),
+        currency: "LKR",
+
+        first_name: paymentInfo?.customer_name?.split(" ")[0] || "Customer", 
+        last_name: paymentInfo?.customer_name?.split(" ").slice(1).join(" ") || "",
+        email: email,
+        phone: phone,
+        address: address,
+
+        // Recommended optional fields
+        custom_1: req.params.unique_id,
+        hash: hash,
+      }
     });
   } catch (err) {
     console.error("Submit form error:", err.message);

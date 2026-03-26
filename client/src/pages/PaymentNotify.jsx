@@ -1,36 +1,49 @@
 // src/pages/PaymentNotify.jsx
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faTimesCircle, faSpinner, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCheckCircle,
+  faTimesCircle,
+  faSpinner,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 const PaymentNotify = () => {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState('unknown'); // plain string state
+  const [status, setStatus] = useState("unknown");
   const [orderId, setOrderId] = useState(null);
   const [amount, setAmount] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // PayHere usually sends these as query params on return/notify
-    const payhereStatus = searchParams.get('status_code') || searchParams.get('status');
-    const receivedOrderId = searchParams.get('order_id') || searchParams.get('orderId');
-    const receivedAmount = searchParams.get('payhere_amount') || searchParams.get('amount');
+    const payhereStatus =
+      searchParams.get("status_code") || searchParams.get("status");
+    const receivedOrderId =
+      searchParams.get("order_id") || searchParams.get("orderId");
+    const receivedAmount =
+      searchParams.get("payhere_amount") || searchParams.get("amount");
 
     setOrderId(receivedOrderId);
     setAmount(receivedAmount);
 
-    // Map PayHere status codes to friendly names
-    if (payhereStatus === '2') {
-      setStatus('success');
-    } else if (payhereStatus === '0') {
-      setStatus('pending');
-    } else if (payhereStatus === '-1') {
-      setStatus('failed');
-    } else if (payhereStatus === 'cancel') {
-      setStatus('cancelled');
-    } else {
-      setStatus('unknown');
+    // PayHere status code mapping
+    switch (payhereStatus) {
+      case "2":
+        setStatus("success");
+        break;
+      case "0":
+        setStatus("pending");
+        break;
+      case "-1":
+        setStatus("failed");
+        break;
+      case "cancel":
+      case "cancelled":
+        setStatus("cancelled");
+        break;
+      default:
+        setStatus("unknown");
     }
 
     setLoading(false);
@@ -40,43 +53,46 @@ const PaymentNotify = () => {
   const statusConfig = {
     success: {
       icon: faCheckCircle,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-      title: 'Payment Successful!',
-      message: 'Thank you! Your payment has been successfully processed.',
-      nextAction: 'View your order details or continue shopping.',
+      color: "text-green-600",
+      bg: "bg-green-50",
+      title: "Payment Successful!",
+      message: "Thank you! Your payment has been successfully processed.",
+      nextAction: "View your order details or continue shopping.",
     },
     failed: {
       icon: faTimesCircle,
-      color: 'text-red-600',
-      bg: 'bg-red-50',
-      title: 'Payment Failed',
-      message: 'Unfortunately, your payment could not be processed. Please try again.',
-      nextAction: 'Return to checkout or contact support.',
+      color: "text-red-600",
+      bg: "bg-red-50",
+      title: "Payment Failed",
+      message:
+        "Unfortunately, your payment could not be processed. Please try again.",
+      nextAction: "Return to checkout or contact support.",
     },
     pending: {
       icon: faSpinner,
-      color: 'text-yellow-600',
-      bg: 'bg-yellow-50',
-      title: 'Payment Pending',
-      message: 'Your payment is being processed. This usually takes a few minutes.',
-      nextAction: 'We will notify you once it is confirmed.',
+      color: "text-yellow-600",
+      bg: "bg-yellow-50",
+      title: "Payment Pending",
+      message:
+        "Your payment is being processed. This usually takes a few minutes.",
+      nextAction: "We will notify you once it is confirmed.",
     },
     cancelled: {
       icon: faTimesCircle,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
-      title: 'Payment Cancelled',
-      message: 'You have cancelled the payment process.',
-      nextAction: 'You can try again or contact support if needed.',
+      color: "text-orange-600",
+      bg: "bg-orange-50",
+      title: "Payment Cancelled",
+      message: "You have cancelled the payment process.",
+      nextAction: "You can try again or contact support if needed.",
     },
     unknown: {
       icon: faTimesCircle,
-      color: 'text-gray-600',
-      bg: 'bg-gray-50',
-      title: 'Payment Status Unknown',
-      message: 'We could not determine the payment status. Please check your email or contact support.',
-      nextAction: 'We are looking into it.',
+      color: "text-gray-600",
+      bg: "bg-gray-50",
+      title: "Payment Status Unknown",
+      message:
+        "We could not determine the payment status. Please check your email or contact support.",
+      nextAction: "We are looking into it.",
     },
   };
 
@@ -86,8 +102,14 @@ const PaymentNotify = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <FontAwesomeIcon icon={faSpinner} spin className="text-6xl text-green-600 mb-6" />
-          <p className="text-xl text-gray-700">Verifying your payment...</p>
+          <FontAwesomeIcon
+            icon={faSpinner}
+            spin
+            className="text-6xl text-green-600 mb-6"
+          />
+          <p className="text-xl text-gray-700">
+            Verifying your payment status...
+          </p>
         </div>
       </div>
     );
@@ -95,9 +117,9 @@ const PaymentNotify = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 text-center">
         {/* Status Banner */}
-        <div className={`p-10 md:p-16 text-center ${config.bg}`}>
+        <div className={`p-10 md:p-16 ${config.bg}`}>
           <FontAwesomeIcon
             icon={config.icon}
             className={`text-7xl md:text-9xl mb-6 ${config.color}`}
@@ -110,14 +132,14 @@ const PaymentNotify = () => {
           </p>
         </div>
 
-        {/* Order Summary */}
+        {/* Order Details */}
         <div className="p-8 md:p-12">
           {orderId && (
-            <div className="bg-gray-50 p-6 md:p-8 rounded-xl mb-10">
-              <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-6">
+            <div className="bg-gray-50 p-6 md:p-8 rounded-xl mb-10 text-left">
+              <h3 className="text-2xl font-semibold text-gray-800 mb-6">
                 Order Details
               </h3>
-              <div className="space-y-4 text-gray-700 text-base md:text-lg">
+              <div className="space-y-4 text-gray-700 text-lg">
                 <p className="flex justify-between">
                   <span>Order ID:</span>
                   <span className="font-medium">{orderId}</span>
@@ -125,7 +147,9 @@ const PaymentNotify = () => {
                 {amount && (
                   <p className="flex justify-between">
                     <span>Amount:</span>
-                    <span className="font-medium">LKR {Number(amount).toLocaleString()}</span>
+                    <span className="font-medium">
+                      LKR {Number(amount).toLocaleString()}
+                    </span>
                   </p>
                 )}
                 <p className="flex justify-between">
@@ -138,14 +162,15 @@ const PaymentNotify = () => {
             </div>
           )}
 
-          <p className="text-center text-gray-700 mb-10 text-lg md:text-xl">
+          <p className="text-center text-gray-700 mb-10 text-lg">
             {config.nextAction}
           </p>
 
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link
               to="/"
-              className="bg-green-600 hover:bg-green-700 text-white px-10 py-4 md:py-5 rounded-xl font-medium text-lg md:text-xl transition shadow-lg flex items-center justify-center gap-3"
+              className="bg-green-600 hover:bg-green-700 text-white px-12 py-5 rounded-xl font-medium text-xl transition-all shadow-lg flex items-center justify-center gap-3"
             >
               Back to Home
               <FontAwesomeIcon icon={faArrowRight} />
@@ -153,7 +178,7 @@ const PaymentNotify = () => {
 
             <Link
               to="/contact"
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-10 py-4 md:py-5 rounded-xl font-medium text-lg md:text-xl transition shadow-lg"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-12 py-5 rounded-xl font-medium text-xl transition-all shadow-lg"
             >
               Contact Support
             </Link>
