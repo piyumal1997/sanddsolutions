@@ -15,6 +15,7 @@ import {
   faHorseHead,
   faMailBulk,
   faMoneyBills,
+  faPeopleGroup,
 } from '@fortawesome/free-solid-svg-icons';
 import { logout } from '../../utils/auth';
 import Swal from 'sweetalert2';
@@ -36,6 +37,7 @@ const SidebarNav = ({ role }) => {
 
   if (role === 'admin') {
     links.splice(1, 0, { path: '/admin/users', label: 'Users', icon: faUsers });
+    links.splice(2, 0, { path: '/admin/employees', label: 'Employees', icon: faPeopleGroup });
   }
 
   const handleLogout = async () => {

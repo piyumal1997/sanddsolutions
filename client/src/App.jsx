@@ -49,12 +49,11 @@ const ThankYouPayHere = lazy(() => import("./pages/ThankYouPayHere"));
 const PaymentNotify = lazy(() => import("./pages/PaymentNotify"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
 
-
-
 // Admin pages
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
 const ProjectsManagement = lazy(() => import("./pages/Admin/ProjectsManagement"));
 const UsersManagement = lazy(() => import("./pages/Admin/UsersManagement"));
+const EmployeesManagement = lazy(() => import("./pages/Admin/EmployeesManagement"));
 const PackagesManagement = lazy(() => import("./pages/Admin/PackagesManagement"));
 const BrandsManagement = lazy(() => import("./pages/Admin/BrandsManagement"));
 const CapacitiesManagement = lazy(() => import("./pages/Admin/CapacitiesManagement"));
@@ -159,6 +158,7 @@ const router = createBrowserRouter([
           { path: "/admin/dashboard", element: <Dashboard /> },
           { path: "/admin/projects", element: <ProjectsManagement /> },
           { path: "/admin/users", element: <UsersManagement /> },
+          { path: "/admin/employees", element: <EmployeesManagement /> },
           { path: "/admin/packages", element: <PackagesManagement /> },
           { path: "/admin/inquiries", element: <InquiriesManagement /> },
           { path: "/admin/brands", element: <BrandsManagement /> },
