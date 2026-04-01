@@ -40,7 +40,7 @@ const upload = multer({
   },
 });
 
-// ====================== VALIDATION ======================
+// ====================== VALIDATION (Fixed) ======================
 const employeeSchema = Joi.object({
   full_name: Joi.string().min(3).max(150).required(),
   position: Joi.string().min(2).max(100).required(),
@@ -48,7 +48,10 @@ const employeeSchema = Joi.object({
   nic_number: Joi.string().min(10).max(20).required(),
   contact_number: Joi.string().min(10).max(15).required(),
   birthday: Joi.date().allow(null, ""),
-  education_qualifications: Joi.array().items(Joi.string()).allow(null),
+  education_qualifications: Joi.alternatives().try(
+    Joi.array().items(Joi.string()),
+    Joi.string().allow("")
+  ).default([]),
   joined_at: Joi.date().allow(null, ""),
 });
 
@@ -88,6 +91,14 @@ router.use(restrictTo("admin"));
 
 // POST - Create Employee
 router.post("/", upload.single("photo"), async (req, res) => {
+  // Convert comma-separated string to array before validation
+  if (typeof req.body.education_qualifications === 'string') {
+    req.body.education_qualifications = req.body.education_qualifications
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
   const { error } = employeeSchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
@@ -116,7 +127,9 @@ router.post("/", upload.single("photo"), async (req, res) => {
         nic_number,
         contact_number,
         photoPath,
-        education_qualifications ? JSON.stringify(education_qualifications) : null,
+        education_qualifications && education_qualifications.length > 0 
+          ? JSON.stringify(education_qualifications) 
+          : null,
         birthday || null,
         joined_at || null
       ]
@@ -134,8 +147,15 @@ router.post("/", upload.single("photo"), async (req, res) => {
   }
 });
 
-// PUT - Update Employee
+// PUT - Update Employee (Same conversion logic)
 router.put("/:id", upload.single("photo"), async (req, res) => {
+  if (typeof req.body.education_qualifications === 'string') {
+    req.body.education_qualifications = req.body.education_qualifications
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
   const { error } = employeeSchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
@@ -151,7 +171,9 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
       address || null,
       nic_number,
       contact_number,
-      education_qualifications ? JSON.stringify(education_qualifications) : null,
+      education_qualifications && education_qualifications.length > 0 
+        ? JSON.stringify(education_qualifications) 
+        : null,
       birthday || null,
       joined_at || null
     ];
