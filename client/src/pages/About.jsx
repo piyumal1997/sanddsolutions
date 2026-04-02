@@ -37,6 +37,7 @@ const About = () => {
         const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees/public`);
         const data = await res.json();
         setTeamMembers(data.data || []);
+        console.log("Fetched team members:", data.data);
       } catch (err) {
         console.error("Failed to load team", err);
       } finally {
@@ -176,7 +177,6 @@ const About = () => {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-4 mb-12">
-            <FontAwesomeIcon icon={faUsers} className="text-green-600 text-4xl" />
             <h2 className="text-3xl md:text-4xl font-bold text-center text-green-900">
               Our Dedicated Team
             </h2>
@@ -223,12 +223,6 @@ const About = () => {
                           <span className="font-medium">Education: </span>
                           {member.education_qualifications.join(", ")}
                         </div>
-                      )}
-
-                      {member.birthday && (
-                        <p className="text-sm text-gray-500">
-                          🎂 {new Date(member.birthday).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
-                        </p>
                       )}
                     </div>
                   </div>
