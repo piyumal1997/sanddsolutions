@@ -37,7 +37,7 @@ const About = () => {
         const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees/public`);
         const data = await res.json();
         setTeamMembers(data.data || []);
-        console.log("Fetched team members:", data.data);
+        // console.log("Fetched team members:", data.data);
       } catch (err) {
         console.error("Failed to load team", err);
       } finally {
@@ -220,7 +220,7 @@ const About = () => {
 
                       {member.education_qualifications && member.education_qualifications.length > 0 && (
                         <div className="text-sm text-gray-600 mb-4 line-clamp-2">
-                          <span className="font-medium">Education: </span>
+                          {/* <span className="font-medium">Education: </span> */}
                           {member.education_qualifications.join(", ")}
                         </div>
                       )}

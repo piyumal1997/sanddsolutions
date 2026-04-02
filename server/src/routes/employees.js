@@ -61,7 +61,7 @@ const employeeSchema = Joi.object({
 router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT id, employee_number, full_name, position, photo, birthday, gender, marital_status
+      SELECT id, employee_number, full_name, position, photo, birthday, gender, marital_status, education_qualifications
       FROM employees 
       WHERE is_active = 1 
       ORDER BY full_name ASC
