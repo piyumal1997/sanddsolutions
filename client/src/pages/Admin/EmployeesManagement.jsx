@@ -14,6 +14,8 @@ const EmployeesManagement = () => {
     address: "",
     nic_number: "",
     contact_number: "",
+    gender: "",
+    marital_status: "",
     birthday: "",
     education_qualifications: "",
     joined_at: "",
@@ -65,6 +67,8 @@ const EmployeesManagement = () => {
       address: emp.address || "",
       nic_number: emp.nic_number || "",
       contact_number: emp.contact_number || "",
+      gender: emp.gender || "",
+      marital_status: emp.marital_status || "",
       birthday: emp.birthday ? emp.birthday.split("T")[0] : "",
       education_qualifications: emp.education_qualifications
         ? emp.education_qualifications.join(", ")
@@ -83,6 +87,8 @@ const EmployeesManagement = () => {
       address: "",
       nic_number: "",
       contact_number: "",
+      gender: "",
+      marital_status: "",
       birthday: "",
       education_qualifications: "",
       joined_at: "",
@@ -101,6 +107,8 @@ const EmployeesManagement = () => {
     formData.append("address", form.address);
     formData.append("nic_number", form.nic_number);
     formData.append("contact_number", form.contact_number);
+    formData.append("gender", form.gender);
+    formData.append("marital_status", form.marital_status);
     formData.append("birthday", form.birthday);
     formData.append("joined_at", form.joined_at);
 
@@ -268,6 +276,42 @@ const EmployeesManagement = () => {
             />
           </div>
 
+          {/* New Fields */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender
+            </label>
+            <select
+              value={form.gender}
+              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Marital Status
+            </label>
+            <select
+              value={form.marital_status}
+              onChange={(e) =>
+                setForm({ ...form, marital_status: e.target.value })
+              }
+              className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">Select Status</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Divorced">Divorced</option>
+              <option value="Widowed">Widowed</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Birthday
@@ -382,13 +426,19 @@ const EmployeesManagement = () => {
                 Photo
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                Employee No
+                Emp No
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Name
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Position
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Gender
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Marital Status
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Contact
@@ -425,6 +475,10 @@ const EmployeesManagement = () => {
                 </td>
                 <td className="px-6 py-4 font-semibold">{emp.full_name}</td>
                 <td className="px-6 py-4 text-gray-600">{emp.position}</td>
+                <td className="px-6 py-4 text-gray-600">{emp.gender || "—"}</td>
+                <td className="px-6 py-4 text-gray-600">
+                  {emp.marital_status || "—"}
+                </td>
                 <td className="px-6 py-4 text-gray-600">
                   {emp.contact_number}
                 </td>
@@ -444,8 +498,7 @@ const EmployeesManagement = () => {
                     {emp.is_active === 1 ? "Active" : "Inactive"}
                   </span>
                 </td>
-
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap">
                   {emp.is_active === 1 ? (
                     <>
                       <button
