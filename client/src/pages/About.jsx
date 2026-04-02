@@ -1,6 +1,6 @@
 // src/pages/About.jsx
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Link } from "react-router-dom";
 import {
   faSun,
   faRobot,
@@ -11,11 +11,11 @@ import {
   faEye,
   faBullseye,
   faUsers,
-} from '@fortawesome/free-solid-svg-icons';
+} from "@fortawesome/free-solid-svg-icons";
 
-import aboutBg from '../assets/images/background/about-bg.jpg';
+import aboutBg from "../assets/images/background/about-bg.jpg";
 import { company } from "../data/company";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 const iconMap = {
   faSun: faSun,
@@ -34,7 +34,9 @@ const About = () => {
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/employees/public`);
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/employees/public`,
+        );
         const data = await res.json();
         setTeamMembers(data.data || []);
         // console.log("Fetched team members:", data.data);
@@ -49,31 +51,34 @@ const About = () => {
 
   // Helper to generate proper title (Mr. / Mrs. / Ms.)
   const getTitle = (gender, maritalStatus) => {
-    if (!gender) return '';
-    if (gender === 'Male') return 'Mr.';
-    if (gender === 'Female') {
-      return maritalStatus === 'Married' ? 'Mrs.' : 'Ms.';
+    if (!gender) return "";
+    if (gender === "Male") return "Mr.";
+    if (gender === "Female") {
+      return maritalStatus === "Married" ? "Mrs." : "Ms.";
     }
-    return 'Mx.'; // Neutral
+    return "Mx."; // Neutral
   };
 
   const divisions = [
     {
       id: 1,
       title: "Solar & Energy Systems",
-      content: "Innovative solar power solutions for residential, commercial, and industrial applications, promoting renewable energy across Sri Lanka.",
+      content:
+        "Innovative solar power solutions for residential, commercial, and industrial applications, promoting renewable energy across Sri Lanka.",
       icon: faSun,
     },
     {
       id: 2,
       title: "Advanced Engineering & Automation",
-      content: "Cutting-edge automation, control systems, and smart engineering solutions for enhanced efficiency and productivity.",
+      content:
+        "Cutting-edge automation, control systems, and smart engineering solutions for enhanced efficiency and productivity.",
       icon: faRobot,
     },
     {
       id: 3,
       title: "General Engineering",
-      content: "Comprehensive engineering services, custom fabrication, and project management tailored to diverse client needs.",
+      content:
+        "Comprehensive engineering services, custom fabrication, and project management tailored to diverse client needs.",
       icon: faGears,
     },
   ];
@@ -93,7 +98,8 @@ const About = () => {
               About {company.name}
             </h1>
             <p className="text-xl md:text-2xl max-w-3xl mx-auto drop-shadow-md">
-              Leading provider of sustainable energy and advanced engineering solutions across Sri Lanka
+              Leading provider of sustainable energy and advanced engineering
+              solutions across Sri Lanka
             </p>
           </div>
         </div>
@@ -103,11 +109,23 @@ const About = () => {
       <section className="py-20 bg-gray-100">
         <div className="container mx-auto px-6 text-center">
           <p className="text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            We specialize in innovative and sustainable development solutions across three major core sectors: <br />
-            <span className="font-semibold text-green-700">Solar & Energy Systems</span>,{' '}
-            <span className="font-semibold text-green-700">Advanced Engineering & Automation</span>, and{' '}
-            <span className="font-semibold text-green-700">General Engineering</span>.<br /><br />
-            With over 15 years of excellence serving Sri Lanka, we are committed to quality, efficiency, and environmental responsibility.
+            We specialize in innovative and sustainable development solutions
+            across three major core sectors: <br />
+            <span className="font-semibold text-green-700">
+              Solar & Energy Systems
+            </span>
+            ,{" "}
+            <span className="font-semibold text-green-700">
+              Advanced Engineering & Automation
+            </span>
+            , and{" "}
+            <span className="font-semibold text-green-700">
+              General Engineering
+            </span>
+            .<br />
+            <br />
+            With over 15 years of excellence serving Sri Lanka, we are committed
+            to quality, efficiency, and environmental responsibility.
           </p>
         </div>
       </section>
@@ -119,20 +137,34 @@ const About = () => {
             <div className="relative bg-gradient-to-br from-green-50 to-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group">
               <div className="relative p-10 text-center">
                 <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-md">
-                  <FontAwesomeIcon icon={faEye} className="text-green-700 text-5xl" />
+                  <FontAwesomeIcon
+                    icon={faEye}
+                    className="text-green-700 text-5xl"
+                  />
                 </div>
-                <h3 className="text-3xl font-bold text-green-900 mb-6">Our Vision</h3>
-                <p className="text-lg text-gray-700 leading-relaxed">{company.vision}</p>
+                <h3 className="text-3xl font-bold text-green-900 mb-6">
+                  Our Vision
+                </h3>
+                <p className="text-lg text-gray-700 leading-relaxed">
+                  {company.vision}
+                </p>
               </div>
             </div>
 
             <div className="relative bg-gradient-to-br from-green-50 to-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group">
               <div className="relative p-10 text-center">
                 <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-md">
-                  <FontAwesomeIcon icon={faBullseye} className="text-green-700 text-5xl" />
+                  <FontAwesomeIcon
+                    icon={faBullseye}
+                    className="text-green-700 text-5xl"
+                  />
                 </div>
-                <h3 className="text-3xl font-bold text-green-900 mb-6">Our Mission</h3>
-                <p className="text-lg text-gray-700 leading-relaxed">{company.mission}</p>
+                <h3 className="text-3xl font-bold text-green-900 mb-6">
+                  Our Mission
+                </h3>
+                <p className="text-lg text-gray-700 leading-relaxed">
+                  {company.mission}
+                </p>
               </div>
             </div>
           </div>
@@ -155,7 +187,10 @@ const About = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
                   <div className="absolute bottom-6 left-6 right-6 z-20">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                      <FontAwesomeIcon icon={division.icon} className="text-green-600 text-3xl" />
+                      <FontAwesomeIcon
+                        icon={division.icon}
+                        className="text-green-600 text-3xl"
+                      />
                     </div>
                     <h3 className="text-2xl font-bold text-white drop-shadow-md">
                       {division.title}
@@ -190,7 +225,9 @@ const About = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
               {teamMembers.map((member) => {
                 const title = getTitle(member.gender, member.marital_status);
-                const displayName = title ? `${title} ${member.full_name}` : member.full_name;
+                const displayName = title
+                  ? `${title} ${member.full_name}`
+                  : member.full_name;
 
                 return (
                   <div
@@ -216,12 +253,34 @@ const About = () => {
                       <h3 className="text-2xl font-bold text-gray-900 mb-1">
                         {displayName}
                       </h3>
-                      <p className="text-green-700 font-semibold mb-4">{member.position}</p>
+                      <p className="text-green-700 font-semibold mb-4">
+                        {member.position}
+                      </p>
 
-                      {member.education_qualifications && member.education_qualifications.length > 0 && (
+                      {member.education_qualifications && (
                         <div className="text-sm text-gray-600 mb-4 line-clamp-2">
-                          {/* <span className="font-medium">Education: </span> */}
-                          {member.education_qualifications.join(", ")}
+                          {(() => {
+                            try {
+                              // 1. If it's a string (raw JSON), parse it. If it's already an array, use it.
+                              const qualifications =
+                                typeof member.education_qualifications ===
+                                "string"
+                                  ? JSON.parse(member.education_qualifications)
+                                  : member.education_qualifications;
+
+                              // 2. Ensure it is an array and has items before joining
+                              return Array.isArray(qualifications)
+                                ? qualifications.join(", ")
+                                : qualifications;
+                            } catch (error) {
+                              console.error(
+                                "Failed to parse education_qualifications",
+                                error,
+                              );
+                              // 3. Fallback: if parsing fails, just show the raw value
+                              return member.education_qualifications;
+                            }
+                          })()}
                         </div>
                       )}
                     </div>
@@ -251,7 +310,9 @@ const About = () => {
                     className="text-green-600 text-4xl"
                   />
                 </div>
-                <p className="text-4xl font-bold text-green-700 mb-2">{ach.value}</p>
+                <p className="text-4xl font-bold text-green-700 mb-2">
+                  {ach.value}
+                </p>
                 <p className="text-gray-600 text-lg">{ach.label}</p>
               </div>
             ))}
@@ -266,7 +327,8 @@ const About = () => {
             Ready to Build a Sustainable Future Together?
           </h2>
           <p className="text-xl text-gray-700 max-w-3xl mx-auto mb-10">
-            Contact us today for a free consultation and discover how we can support your goals.
+            Contact us today for a free consultation and discover how we can
+            support your goals.
           </p>
           <Link
             to="/contact"
