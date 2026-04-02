@@ -60,14 +60,17 @@ const About = () => {
   };
 
   const formatQualifications = (data) => {
-  if (!data) return "";
-  try {
-    const parsed = typeof data === "string" && data.startsWith("[") ? JSON.parse(data) : data;
-    return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-  } catch {
-    return data;
-  }
-};
+    if (!data) return "";
+    try {
+      const parsed =
+        typeof data === "string" && data.startsWith("[")
+          ? JSON.parse(data)
+          : data;
+      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+    } catch {
+      return data;
+    }
+  };
 
   const divisions = [
     {
@@ -135,14 +138,18 @@ const About = () => {
             <span className="font-semibold text-green-700">
               Advanced Engineering & Automation
             </span>
-            , and{" "}
+            ,{" "}
             <span className="font-semibold text-green-700">
               General Engineering
             </span>
+            , and{" "}
+            <span className="font-semibold text-green-700">
+              Cooling Solutions
+            </span>
             .<br />
             <br />
-            With over 15 years of excellence serving Sri Lanka, we are committed
-            to quality, efficiency, and environmental responsibility.
+            With over 4 years plus of excellence serving Sri Lanka, we are
+            committed to quality, efficiency, and environmental responsibility.
           </p>
         </div>
       </section>
@@ -201,14 +208,19 @@ const About = () => {
                 className="group bg-gray-50 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10"></div>
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+
+                  {/* Icon - Positioned Top Right */}
+                  <div className="absolute top-4 right-4 z-20 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md">
+                    <FontAwesomeIcon
+                      icon={division.icon}
+                      className="text-green-600 text-xl"
+                    />
+                  </div>
+
+                  {/* Title - Positioned Bottom Left */}
                   <div className="absolute bottom-6 left-6 right-6 z-20">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                      <FontAwesomeIcon
-                        icon={division.icon}
-                        className="text-green-600 text-3xl"
-                      />
-                    </div>
                     <h3 className="text-2xl font-bold text-white drop-shadow-md">
                       {division.title}
                     </h3>
@@ -225,7 +237,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* ====================== OUR TEAM SECTION ====================== */}
+      {/* Our Team Sections */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-4 mb-12">
@@ -276,7 +288,9 @@ const About = () => {
 
                       {member.education_qualifications && (
                         <div className="text-sm text-gray-600 mb-4">
-                          {formatQualifications(member.education_qualifications)}
+                          {formatQualifications(
+                            member.education_qualifications,
+                          )}
                         </div>
                       )}
                     </div>
