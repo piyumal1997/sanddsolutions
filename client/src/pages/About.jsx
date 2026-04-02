@@ -10,7 +10,7 @@ import {
   faTrophy,
   faEye,
   faBullseye,
-  faUsers,
+  faSnowflake,
 } from "@fortawesome/free-solid-svg-icons";
 
 import aboutBg from "../assets/images/background/about-bg.jpg";
@@ -59,6 +59,16 @@ const About = () => {
     return "Mx."; // Neutral
   };
 
+  const formatQualifications = (data) => {
+  if (!data) return "";
+  try {
+    const parsed = typeof data === "string" && data.startsWith("[") ? JSON.parse(data) : data;
+    return Array.isArray(parsed) ? parsed.join(", ") : parsed;
+  } catch {
+    return data;
+  }
+};
+
   const divisions = [
     {
       id: 1,
@@ -80,6 +90,13 @@ const About = () => {
       content:
         "Comprehensive engineering services, custom fabrication, and project management tailored to diverse client needs.",
       icon: faGears,
+    },
+    {
+      id: 4,
+      title: "Cooling Solutions",
+      content:
+        "Energy-efficient climate control and high-performance HVAC systems for residential, commercial, and industrial environments across Sri Lanka.",
+      icon: faSnowflake,
     },
   ];
 
@@ -177,7 +194,7 @@ const About = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-green-900">
             Our Core Divisions
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 max-w-6xl mx-auto">
             {divisions.map((division) => (
               <div
                 key={division.id}
@@ -258,29 +275,8 @@ const About = () => {
                       </p>
 
                       {member.education_qualifications && (
-                        <div className="text-sm text-gray-600 mb-4 line-clamp-2">
-                          {(() => {
-                            try {
-                              // 1. If it's a string (raw JSON), parse it. If it's already an array, use it.
-                              const qualifications =
-                                typeof member.education_qualifications ===
-                                "string"
-                                  ? JSON.parse(member.education_qualifications)
-                                  : member.education_qualifications;
-
-                              // 2. Ensure it is an array and has items before joining
-                              return Array.isArray(qualifications)
-                                ? qualifications.join(", ")
-                                : qualifications;
-                            } catch (error) {
-                              console.error(
-                                "Failed to parse education_qualifications",
-                                error,
-                              );
-                              // 3. Fallback: if parsing fails, just show the raw value
-                              return member.education_qualifications;
-                            }
-                          })()}
+                        <div className="text-sm text-gray-600 mb-4">
+                          {formatQualifications(member.education_qualifications)}
                         </div>
                       )}
                     </div>
