@@ -32,11 +32,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png/;
-    if (allowed.test(path.extname(file.originalname).toLowerCase())) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only JPG, JPEG, PNG files allowed"));
-    }
+    if (allowed.test(path.extname(file.originalname).toLowerCase())) cb(null, true);
+    else cb(new Error("Only JPG, JPEG, PNG files allowed"));
   },
 });
 
@@ -55,7 +52,7 @@ const employeeSchema = Joi.object({
   joined_at: Joi.date().allow(null, ""),
 });
 
-// ====================== PUBLIC ROUTE (Our Team Page) ======================
+// ====================== PUBLIC ROUTE ======================
 router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
@@ -89,13 +86,13 @@ router.get("/public", async (req, res) => {
 router.use(protect);
 router.use(restrictTo("admin"));
 
-// NEW: Get ALL employees (Active + Inactive) - For Admin Dashboard
+// Get ALL employees (Active + Inactive) - For Admin
 router.get("/", async (req, res) => {
   try {
     const [employees] = await pool.query(`
       SELECT id, employee_number, full_name, position, address, nic_number, 
              contact_number, photo, education_qualifications, birthday, 
-             joined_at, is_active, created_at
+             joined_at, is_active, deactivated_at, reactivated_at, created_at
       FROM employees 
       ORDER BY full_name ASC
     `);
@@ -137,7 +134,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
     const [last] = await pool.query("SELECT employee_number FROM employees ORDER BY id DESC LIMIT 1");
     let nextNum = 1;
     if (last.length > 0) {
-      nextNum = Number.parseInt(last[0].employee_number.split("-")[1]) + 1;
+      nextNum = parseInt(last[0].employee_number.split("-")[1]) + 1;
     }
     const employee_number = `EMP-${nextNum.toString().padStart(4, "0")}`;
 
@@ -156,9 +153,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
         nic_number,
         contact_number,
         photoPath,
-        education_qualifications && education_qualifications.length > 0 
-          ? JSON.stringify(education_qualifications) 
-          : null,
+        education_qualifications && education_qualifications.length > 0 ? JSON.stringify(education_qualifications) : null,
         birthday || null,
         joined_at || null
       ]
@@ -176,8 +171,14 @@ router.post("/", upload.single("photo"), async (req, res) => {
   }
 });
 
-// PUT - Update Employee
+// PUT - Update Employee (Only allowed if Active)
 router.put("/:id", upload.single("photo"), async (req, res) => {
+  // Check if employee is active
+  const [empCheck] = await pool.query("SELECT is_active FROM employees WHERE id = ?", [req.params.id]);
+  if (empCheck.length === 0 || empCheck[0].is_active === 0) {
+    return res.status(403).json({ success: false, message: "Cannot edit inactive employee. Please reactivate first." });
+  }
+
   if (typeof req.body.education_qualifications === 'string') {
     req.body.education_qualifications = req.body.education_qualifications
       .split(',')
@@ -200,9 +201,7 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
       address || null,
       nic_number,
       contact_number,
-      education_qualifications && education_qualifications.length > 0 
-        ? JSON.stringify(education_qualifications) 
-        : null,
+      education_qualifications && education_qualifications.length > 0 ? JSON.stringify(education_qualifications) : null,
       birthday || null,
       joined_at || null
     ];
@@ -228,11 +227,13 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
   }
 });
 
-// DELETE → Soft Delete (Deactivate)
+// DELETE → Soft Deactivate
 router.delete("/:id", async (req, res) => {
   try {
     const [result] = await pool.query(
-      "UPDATE employees SET is_active = 0 WHERE id = ?",
+      `UPDATE employees 
+       SET is_active = 0, deactivated_at = NOW(), reactivated_at = NULL 
+       WHERE id = ?`,
       [req.params.id]
     );
 
@@ -242,8 +243,29 @@ router.delete("/:id", async (req, res) => {
 
     res.json({ success: true, message: "Employee has been deactivated successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("DELETE /employees/:id error:", err);
     res.status(500).json({ success: false, message: "Failed to deactivate employee" });
+  }
+});
+
+// NEW: Reactivate Employee
+router.put("/:id/reactivate", async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      `UPDATE employees 
+       SET is_active = 1, reactivated_at = NOW() 
+       WHERE id = ?`,
+      [req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    res.json({ success: true, message: "Employee has been reactivated successfully" });
+  } catch (err) {
+    console.error("PUT /employees/:id/reactivate error:", err);
+    res.status(500).json({ success: false, message: "Failed to reactivate employee" });
   }
 });
 
