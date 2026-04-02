@@ -30,6 +30,7 @@ const PaymentsManagement = () => {
       const data = await res.json();
       setLinks(data.data || []);
     } catch (err) {
+      console.error("Failed to load payments:", err);
       Swal.fire("Error", "Failed to load payments", "error");
     } finally {
       setLoading(false);

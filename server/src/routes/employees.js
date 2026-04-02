@@ -40,7 +40,7 @@ const upload = multer({
   },
 });
 
-// ====================== VALIDATION (Fixed) ======================
+// ====================== VALIDATION ======================
 const employeeSchema = Joi.object({
   full_name: Joi.string().min(3).max(150).required(),
   position: Joi.string().min(2).max(100).required(),
@@ -55,8 +55,8 @@ const employeeSchema = Joi.object({
   joined_at: Joi.date().allow(null, ""),
 });
 
-// ====================== PUBLIC ROUTE ======================
-router.get("/", async (req, res) => {
+// ====================== PUBLIC ROUTE (Our Team Page) ======================
+router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
       SELECT id, employee_number, full_name, position, address, nic_number, 
@@ -80,7 +80,7 @@ router.get("/", async (req, res) => {
 
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error("GET /employees error:", err);
+    console.error("GET /employees/public error:", err);
     res.status(500).json({ success: false, message: "Failed to load employees" });
   }
 });
@@ -89,14 +89,43 @@ router.get("/", async (req, res) => {
 router.use(protect);
 router.use(restrictTo("admin"));
 
+// NEW: Get ALL employees (Active + Inactive) - For Admin Dashboard
+router.get("/", async (req, res) => {
+  try {
+    const [employees] = await pool.query(`
+      SELECT id, employee_number, full_name, position, address, nic_number, 
+             contact_number, photo, education_qualifications, birthday, 
+             joined_at, is_active, created_at
+      FROM employees 
+      ORDER BY full_name ASC
+    `);
+
+    const baseUrl = process.env.NODE_ENV === "production"
+      ? "https://api.sanddsolutions.lk"
+      : "http://localhost:3000";
+
+    const result = employees.map(emp => ({
+      ...emp,
+      photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
+      education_qualifications: emp.education_qualifications 
+        ? JSON.parse(emp.education_qualifications) 
+        : []
+    }));
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error("GET /employees error:", err);
+    res.status(500).json({ success: false, message: "Failed to load employees" });
+  }
+});
+
 // POST - Create Employee
 router.post("/", upload.single("photo"), async (req, res) => {
-  // Convert comma-separated string to array before validation
   if (typeof req.body.education_qualifications === 'string') {
     req.body.education_qualifications = req.body.education_qualifications
       .split(',')
       .map(item => item.trim())
-      .filter(Boolean);
+      .filter(item => item);
   }
 
   const { error } = employeeSchema.validate(req.body);
@@ -147,13 +176,13 @@ router.post("/", upload.single("photo"), async (req, res) => {
   }
 });
 
-// PUT - Update Employee (Same conversion logic)
+// PUT - Update Employee
 router.put("/:id", upload.single("photo"), async (req, res) => {
   if (typeof req.body.education_qualifications === 'string') {
     req.body.education_qualifications = req.body.education_qualifications
       .split(',')
       .map(item => item.trim())
-      .filter(Boolean);
+      .filter(item => item);
   }
 
   const { error } = employeeSchema.validate(req.body);

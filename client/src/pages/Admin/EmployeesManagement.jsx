@@ -146,6 +146,7 @@ const EmployeesManagement = () => {
       Swal.fire('Deactivated', 'Employee has been deactivated successfully', 'success');
       loadEmployees();
     } catch (err) {
+      console.error('Deactivation error:', err);
       Swal.fire('Error', 'Failed to deactivate employee', 'error');
     }
   };
