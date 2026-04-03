@@ -39,7 +39,7 @@ const About = () => {
         );
         const data = await res.json();
         setTeamMembers(data.data || []);
-        // console.log("Fetched team members:", data.data);
+        console.log("Fetched team members:", data.data);
       } catch (err) {
         console.error("Failed to load team", err);
       } finally {
