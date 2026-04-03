@@ -61,15 +61,19 @@ const About = () => {
 
   const formatQualifications = (qualifications) => {
     if (!qualifications) return "";
-    let array = qualifications;
-    if (typeof qualifications === "string") {
+    let arr = qualifications;
+    if (Array.isArray(qualifications)) {
+      arr = qualifications;
+    }
+    else if (typeof qualifications === "string") {
       try {
-        array = JSON.parse(qualifications);
+        const parsed = JSON.parse(qualifications);
+        arr = Array.isArray(parsed) ? parsed : [qualifications];
       } catch {
-        array = qualifications.split(",").map(item => item.trim());
+        arr = qualifications.split(",").map(item => item.trim());
       }
     }
-    return Array.isArray(array) ? array.join(", ") : String(qualifications);
+    return Array.isArray(arr) ? arr.join(", ") : String(arr);
   };
 
   const divisions = [
