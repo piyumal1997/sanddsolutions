@@ -59,17 +59,17 @@ const About = () => {
     return "Mx."; // Neutral
   };
 
-  const formatQualifications = (data) => {
-    if (!data) return "";
-    try {
-      const parsed =
-        typeof data === "string" && data.startsWith("[")
-          ? JSON.parse(data)
-          : data;
-      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-    } catch {
-      return data;
+  const formatQualifications = (qualifications) => {
+    if (!qualifications) return "";
+    let array = qualifications;
+    if (typeof qualifications === "string") {
+      try {
+        array = JSON.parse(qualifications);
+      } catch {
+        array = qualifications.split(",").map(item => item.trim());
+      }
     }
+    return Array.isArray(array) ? array.join(", ") : String(qualifications);
   };
 
   const divisions = [
@@ -288,12 +288,9 @@ const About = () => {
 
                       {member.education_qualifications && (
                         <div className="text-sm text-gray-600 mb-4">
-                          { member.education_qualifications.map((qual, index) => (
-                            <p key={index}>{qual}</p>
-                          ))}
-                          {/* {formatQualifications(
+                          {formatQualifications(
                             member.education_qualifications,
-                          )} */}
+                          )}
                         </div>
                       )}
                     </div>
