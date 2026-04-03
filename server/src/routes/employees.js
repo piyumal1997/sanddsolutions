@@ -132,12 +132,18 @@ router.post("/", upload.single("photo"), async (req, res) => {
   const { full_name, position, address, nic_number, contact_number, gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
 
   try {
+    // Generate employee number starting from 10000
     const [last] = await pool.query("SELECT employee_number FROM employees ORDER BY id DESC LIMIT 1");
-    let nextNum = 1;
+    let nextNum = 10000;
+
     if (last.length > 0 && last[0].employee_number) {
-      nextNum = parseInt(last[0].employee_number.split("-")[1]) + 1;
+      const lastNum = parseInt(last[0].employee_number.replace('SDEMP-', ''));
+      if (!isNaN(lastNum)) {
+        nextNum = lastNum + 1;
+      }
     }
-    const employee_number = `EMP-${nextNum.toString().padStart(4, "0")}`;
+
+    const employee_number = `SDEMP-${nextNum}`;
 
     const photoPath = req.file ? `/uploads/employees/${req.file.filename}` : null;
 

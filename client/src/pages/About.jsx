@@ -240,7 +240,7 @@ const About = () => {
       {/* Our Team Sections */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-center gap-4 mb-12">
+          <div className="flex items-center justify-center gap-4 mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-center text-green-900">
               Our Dedicated Team
             </h2>
@@ -288,9 +288,12 @@ const About = () => {
 
                       {member.education_qualifications && (
                         <div className="text-sm text-gray-600 mb-4">
-                          {formatQualifications(
+                          { member.education_qualifications.map((qual, index) => (
+                            <p key={index}>{qual}</p>
+                          ))}
+                          {/* {formatQualifications(
                             member.education_qualifications,
-                          )}
+                          )} */}
                         </div>
                       )}
                     </div>
