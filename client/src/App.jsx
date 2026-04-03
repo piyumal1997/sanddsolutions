@@ -42,6 +42,7 @@ const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("./pages/legal/TermsConditions"));
 const CoolingSolutions = lazy(() => import("./pages/CoolingSolutions"));
 const BTUCalculatorPage = lazy(() => import("./pages/BTUCalculatorPage"));
+const EmployeeProfile = lazy(() => import("./pages/EmployeeProfile"));
 
 //PayHere Site Required Pages
 const Pay = lazy(() => import("./pages/Pay"));
@@ -149,6 +150,7 @@ const router = createBrowserRouter([
           { path: "/thank-you-payhere", element: <ThankYouPayHere /> }, //From PayHere redirections
           { path: "/payment-notify", element: <PaymentNotify /> }, //From PayHere redirections
           { path: "/payment-cancel", element: <PaymentCancel /> }, //From PayHere redirections
+          { path: "/employee/:id", element: <EmployeeProfile /> },
           { path: "*", element: <NotFound /> },
         ],
       },

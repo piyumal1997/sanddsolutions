@@ -58,6 +58,8 @@ const employeeSchema = Joi.object({
 });
 
 // ====================== PUBLIC ROUTE (for Our Team page) ======================
+
+// GET Active Employees Only - For Public
 router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
@@ -80,6 +82,39 @@ router.get("/public", async (req, res) => {
   } catch (err) {
     console.error("GET /employees/public error:", err);
     res.status(500).json({ success: false, message: "Failed to load team" });
+  }
+});
+
+// PUBLIC QR PROFILE - No Auth Required
+router.get("/:id/profile", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT id, employee_number, full_name, position, photo, gender, 
+             marital_status, birthday, address, contact_number, is_active
+      FROM employees 
+      WHERE id = ?`,
+      [req.params.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    const emp = rows[0];
+    const baseUrl = process.env.NODE_ENV === "production"
+      ? "https://api.sanddsolutions.lk"
+      : "http://localhost:3000";
+
+    const profile = {
+      ...emp,
+      photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
+      status: emp.is_active === 1 ? "Currently Working" : "Not with us",
+      statusColor: emp.is_active === 1 ? "text-green-600" : "text-red-600"
+    };
+
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to load profile" });
   }
 });
 

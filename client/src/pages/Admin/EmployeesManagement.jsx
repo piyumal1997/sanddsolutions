@@ -450,6 +450,9 @@ const EmployeesManagement = () => {
                 Status
               </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                QR Code
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                 Actions
               </th>
             </tr>
@@ -497,6 +500,37 @@ const EmployeesManagement = () => {
                   >
                     {emp.is_active === 1 ? "Active" : "Inactive"}
                   </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const profileUrl = `https://sanddsolutions.lk/employee/${emp.id}`;
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(profileUrl)}&color=006400`;
+                        window.open(qrUrl, "_blank");
+                      }}
+                      className="flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-2xl hover:bg-green-700 transition text-sm font-medium"
+                    >
+                      👁️ View QR
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        const profileUrl = `https://sanddsolutions.lk/employee/${emp.id}`;
+                        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(profileUrl)}&color=006400`;
+
+                        const link = document.createElement("a");
+                        link.href = qrUrl;
+                        link.download = `${emp.employee_number} - ${emp.full_name}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-2.5 rounded-2xl transition text-sm font-medium"
+                    >
+                      ⬇️ Download
+                    </button>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {emp.is_active === 1 ? (
