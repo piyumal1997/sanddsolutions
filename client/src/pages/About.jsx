@@ -39,7 +39,7 @@ const About = () => {
         );
         const data = await res.json();
         setTeamMembers(data.data || []);
-        console.log("Fetched team members:", data.data);
+        // console.log("Fetched team members:", data.data);
       } catch (err) {
         console.error("Failed to load team", err);
       } finally {
@@ -59,21 +59,27 @@ const About = () => {
     return "Mx."; // Neutral
   };
 
-  const formatQualifications = (qualifications) => {
-    if (!qualifications) return "";
-    let arr = qualifications;
-    if (Array.isArray(qualifications)) {
-      arr = qualifications;
+  const formatQualifications = (data) => {
+    if (!data) return "";
+    let arr = [];
+    if (Array.isArray(data)) {
+      arr = data;
     }
-    else if (typeof qualifications === "string") {
+    else if (typeof data === "string") {
       try {
-        const parsed = JSON.parse(qualifications);
-        arr = Array.isArray(parsed) ? parsed : [qualifications];
+        const parsed = JSON.parse(data);
+        arr = Array.isArray(parsed) ? parsed : [parsed];
       } catch {
-        arr = qualifications.split(",").map(item => item.trim());
+        arr = data.split(",").map(item => item.trim());
       }
     }
-    return Array.isArray(arr) ? arr.join(", ") : String(arr);
+    arr = arr.map(item => {
+      if (typeof item === "string") {
+        return item.replace(/^"|"$/g, '').trim();
+      }
+      return item;
+    });
+    return arr.filter(Boolean).join(", ");
   };
 
   const divisions = [
