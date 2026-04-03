@@ -61,25 +61,13 @@ const About = () => {
 
   const formatQualifications = (data) => {
     if (!data) return "";
-    let arr = [];
-    if (Array.isArray(data)) {
-      arr = data;
-    }
-    else if (typeof data === "string") {
-      try {
-        const parsed = JSON.parse(data);
-        arr = Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        arr = data.split(",").map(item => item.trim());
-      }
-    }
-    arr = arr.map(item => {
-      if (typeof item === "string") {
-        return item.replace(/^"|"$/g, '').trim();
-      }
-      return item;
-    });
-    return arr.filter(Boolean).join(", ");
+    const rawString = Array.isArray(data) ? data.join(",") : String(data);
+    const cleanedString = rawString.replace(/[\[\]"\\]/g, "");
+    return cleanedString
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(", ");
   };
 
   const divisions = [
