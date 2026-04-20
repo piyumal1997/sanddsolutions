@@ -39,13 +39,13 @@ const upload = multer({
 
 // ====================== VALIDATION SCHEMA ======================
 const employeeSchema = Joi.object({
-  full_name: Joi.string().min(3).max(150).required(),
+  first_name: Joi.string().min(2).max(100).required(),
+  last_name: Joi.string().min(2).max(100).required(),
   position: Joi.string().min(2).max(100).required(),
   address: Joi.string().allow(null, ""),
   nic_number: Joi.string().min(10).max(20).required(),
   contact_number: Joi.string().min(10).max(15).required(),
   
-  // NEW FIELDS
   gender: Joi.string().valid('Male', 'Female', 'Other').allow(null, ''),
   marital_status: Joi.string().valid('Single', 'Married', 'Divorced', 'Widowed').allow(null, ''),
 
@@ -57,16 +57,15 @@ const employeeSchema = Joi.object({
   ).default([]),
 });
 
-// ====================== PUBLIC ROUTE (for Our Team page) ======================
-
-// GET Active Employees Only - For Public
+// ====================== PUBLIC ROUTE ======================
 router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT id, employee_number, full_name, position, photo, birthday, gender, marital_status, education_qualifications
+      SELECT id, employee_number, first_name, last_name, position, photo, 
+             birthday, gender, marital_status, education_qualifications
       FROM employees 
       WHERE is_active = 1 
-      ORDER BY full_name ASC
+      ORDER BY first_name ASC
     `);
 
     const baseUrl = process.env.NODE_ENV === "production"
@@ -75,6 +74,7 @@ router.get("/public", async (req, res) => {
 
     const result = employees.map(emp => ({
       ...emp,
+      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
     }));
 
@@ -85,12 +85,12 @@ router.get("/public", async (req, res) => {
   }
 });
 
-// PUBLIC QR PROFILE - No Auth Required
+// PUBLIC QR PROFILE
 router.get("/:id/profile", async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT id, employee_number, full_name, position, photo, gender, 
-             marital_status, birthday, address, contact_number, is_active
+      SELECT id, employee_number, first_name, last_name, position, photo, 
+             gender, marital_status, birthday, address, contact_number, is_active
       FROM employees 
       WHERE id = ?`,
       [req.params.id]
@@ -107,6 +107,7 @@ router.get("/:id/profile", async (req, res) => {
 
     const profile = {
       ...emp,
+      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
       status: emp.is_active === 1 ? "Currently Working" : "Not with us",
       statusColor: emp.is_active === 1 ? "text-green-600" : "text-red-600"
@@ -122,15 +123,16 @@ router.get("/:id/profile", async (req, res) => {
 router.use(protect);
 router.use(restrictTo("admin"));
 
-// GET All Employees (Active + Inactive) - For Admin
+// GET All Employees
 router.get("/", async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT id, employee_number, full_name, position, address, nic_number, 
-             contact_number, gender, marital_status, photo, education_qualifications, 
-             birthday, joined_at, is_active, deactivated_at, reactivated_at, created_at
+      SELECT id, employee_number, first_name, last_name, position, address, 
+             nic_number, contact_number, gender, marital_status, photo, 
+             education_qualifications, birthday, joined_at, is_active, 
+             deactivated_at, reactivated_at, created_at
       FROM employees 
-      ORDER BY full_name ASC
+      ORDER BY first_name ASC
     `);
 
     const baseUrl = process.env.NODE_ENV === "production"
@@ -139,6 +141,7 @@ router.get("/", async (req, res) => {
 
     const result = employees.map(emp => ({
       ...emp,
+      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
       education_qualifications: emp.education_qualifications 
         ? JSON.parse(emp.education_qualifications) 
@@ -164,18 +167,15 @@ router.post("/", upload.single("photo"), async (req, res) => {
   const { error } = employeeSchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-  const { full_name, position, address, nic_number, contact_number, gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
+  const { first_name, last_name, position, address, nic_number, contact_number, 
+         gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
 
   try {
-    // Generate employee number starting from 10000
     const [last] = await pool.query("SELECT employee_number FROM employees ORDER BY id DESC LIMIT 1");
     let nextNum = 10000;
-
     if (last.length > 0 && last[0].employee_number) {
       const lastNum = parseInt(last[0].employee_number.replace('SDEMP-', ''));
-      if (!isNaN(lastNum)) {
-        nextNum = lastNum + 1;
-      }
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
 
     const employee_number = `SDEMP-${nextNum}`;
@@ -184,12 +184,13 @@ router.post("/", upload.single("photo"), async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO employees 
-       (employee_number, full_name, position, address, nic_number, contact_number, 
+       (employee_number, first_name, last_name, position, address, nic_number, contact_number, 
         gender, marital_status, birthday, joined_at, education_qualifications, photo, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [
         employee_number,
-        full_name.trim(),
+        first_name.trim(),
+        last_name.trim(),
         position.trim(),
         address || null,
         nic_number,
@@ -215,7 +216,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
   }
 });
 
-// PUT - Update Employee (Only if Active)
+// PUT - Update Employee
 router.put("/:id", upload.single("photo"), async (req, res) => {
   const [empCheck] = await pool.query("SELECT is_active FROM employees WHERE id = ?", [req.params.id]);
   if (empCheck.length === 0 || empCheck[0].is_active === 0) {
@@ -232,14 +233,17 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
   const { error } = employeeSchema.validate(req.body);
   if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-  const { full_name, position, address, nic_number, contact_number, gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
+  const { first_name, last_name, position, address, nic_number, contact_number, 
+         gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
   const photoPath = req.file ? `/uploads/employees/${req.file.filename}` : null;
 
   try {
-    let query = `UPDATE employees SET full_name=?, position=?, address=?, nic_number=?, contact_number=?, 
-                 gender=?, marital_status=?, birthday=?, joined_at=?, education_qualifications=?`;
+    let query = `UPDATE employees SET first_name=?, last_name=?, position=?, address=?, 
+                 nic_number=?, contact_number=?, gender=?, marital_status=?, 
+                 birthday=?, joined_at=?, education_qualifications=?`;
     let params = [
-      full_name.trim(),
+      first_name.trim(),
+      last_name.trim(),
       position.trim(),
       address || null,
       nic_number,

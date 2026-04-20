@@ -284,13 +284,13 @@ const About = () => {
                         {member.position}
                       </p>
 
-                      {member.education_qualifications && (
+                      {/* {member.education_qualifications && (
                         <div className="text-sm text-gray-600 mb-4">
                           {formatQualifications(
                             member.education_qualifications,
                           )}
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
                 );
