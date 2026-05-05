@@ -249,23 +249,27 @@ const EmployeesManagement = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              First Name
+              First Name *
             </label>
             <input
               value={form.first_name}
+              required
               onChange={(e) => setForm({ ...form, first_name: e.target.value })}
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="First Name"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Last Name
+              Last Name *
             </label>
             <input
               value={form.last_name}
+              required
               onChange={(e) => setForm({ ...form, last_name: e.target.value })}
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="Last Name"
             />
           </div>
 
@@ -278,6 +282,7 @@ const EmployeesManagement = () => {
               onChange={(e) => setForm({ ...form, position: e.target.value })}
               required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="Position (e.g. Solar Engineer)"
             />
           </div>
 
@@ -290,6 +295,7 @@ const EmployeesManagement = () => {
               onChange={(e) => setForm({ ...form, nic_number: e.target.value })}
               required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="1234567890V or 200012345678"
             />
           </div>
 
@@ -304,6 +310,7 @@ const EmployeesManagement = () => {
               }
               required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="07X-XXXXXXX"
             />
           </div>
 
@@ -372,6 +379,7 @@ const EmployeesManagement = () => {
             </label>
             <textarea
               value={form.address}
+              required
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               rows={3}
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
