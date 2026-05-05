@@ -61,7 +61,7 @@ const EmployeeProfile = () => {
               <div className="w-full h-full bg-white/20 flex items-center justify-center text-6xl">👤</div>
             )}
           </div>
-          <h1 className="text-3xl font-bold">{employee.full_name}</h1>
+          <h1 className="text-3xl font-bold">{employee.first_name} {employee.last_name}</h1>
           <p className="text-green-100 mt-1">{employee.position}</p>
         </div>
 

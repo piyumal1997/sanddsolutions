@@ -32,49 +32,52 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png/;
-    if (allowed.test(path.extname(file.originalname).toLowerCase())) cb(null, true);
+    if (allowed.test(path.extname(file.originalname).toLowerCase()))
+      cb(null, true);
     else cb(new Error("Only JPG, JPEG, PNG files allowed"));
   },
 });
 
 // ====================== VALIDATION SCHEMA ======================
 const employeeSchema = Joi.object({
+  full_name: Joi.string().min(3).max(200).required(),
   first_name: Joi.string().min(2).max(100).required(),
   last_name: Joi.string().min(2).max(100).required(),
   position: Joi.string().min(2).max(100).required(),
   address: Joi.string().allow(null, ""),
   nic_number: Joi.string().min(10).max(20).required(),
   contact_number: Joi.string().min(10).max(15).required(),
-  
-  gender: Joi.string().valid('Male', 'Female', 'Other').allow(null, ''),
-  marital_status: Joi.string().valid('Single', 'Married', 'Divorced', 'Widowed').allow(null, ''),
+
+  gender: Joi.string().valid("Male", "Female", "Other").allow(null, ""),
+  marital_status: Joi.string()
+    .valid("Single", "Married", "Divorced", "Widowed")
+    .allow(null, ""),
 
   birthday: Joi.date().allow(null, ""),
   joined_at: Joi.date().allow(null, ""),
-  education_qualifications: Joi.alternatives().try(
-    Joi.array().items(Joi.string()),
-    Joi.string().allow("")
-  ).default([]),
+  education_qualifications: Joi.alternatives()
+    .try(Joi.array().items(Joi.string()), Joi.string().allow(""))
+    .default([]),
 });
 
 // ====================== PUBLIC ROUTE ======================
 router.get("/public", async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT id, employee_number, first_name, last_name, position, photo, 
+      SELECT id, employee_number, full_name, first_name, last_name, position, photo, 
              birthday, gender, marital_status, education_qualifications
       FROM employees 
       WHERE is_active = 1 
       ORDER BY first_name ASC
     `);
 
-    const baseUrl = process.env.NODE_ENV === "production"
-      ? "https://api.sanddsolutions.lk"
-      : "http://localhost:3000";
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://api.sanddsolutions.lk"
+        : "http://localhost:3000";
 
-    const result = employees.map(emp => ({
+    const result = employees.map((emp) => ({
       ...emp,
-      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
     }));
 
@@ -88,29 +91,32 @@ router.get("/public", async (req, res) => {
 // PUBLIC QR PROFILE
 router.get("/:id/profile", async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT id, employee_number, first_name, last_name, position, photo, 
+    const [rows] = await pool.query(
+      `
+      SELECT id, employee_number, full_name, first_name, last_name, position, photo, 
              gender, marital_status, birthday, address, contact_number, is_active
       FROM employees 
       WHERE id = ?`,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
     const emp = rows[0];
-    const baseUrl = process.env.NODE_ENV === "production"
-      ? "https://api.sanddsolutions.lk"
-      : "http://localhost:3000";
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://api.sanddsolutions.lk"
+        : "http://localhost:3000";
 
     const profile = {
       ...emp,
-      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
       status: emp.is_active === 1 ? "Currently Working" : "Not with us",
-      statusColor: emp.is_active === 1 ? "text-green-600" : "text-red-600"
+      statusColor: emp.is_active === 1 ? "text-green-600" : "text-red-600",
     };
 
     res.json({ success: true, data: profile });
@@ -127,7 +133,7 @@ router.use(restrictTo("admin"));
 router.get("/", async (req, res) => {
   try {
     const [employees] = await pool.query(`
-      SELECT id, employee_number, first_name, last_name, position, address, 
+      SELECT id, employee_number, full_name, first_name, last_name, position, address, 
              nic_number, contact_number, gender, marital_status, photo, 
              education_qualifications, birthday, joined_at, is_active, 
              deactivated_at, reactivated_at, created_at
@@ -135,60 +141,82 @@ router.get("/", async (req, res) => {
       ORDER BY first_name ASC
     `);
 
-    const baseUrl = process.env.NODE_ENV === "production"
-      ? "https://api.sanddsolutions.lk"
-      : "http://localhost:3000";
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? "https://api.sanddsolutions.lk"
+        : "http://localhost:3000";
 
-    const result = employees.map(emp => ({
+    const result = employees.map((emp) => ({
       ...emp,
-      full_name: `${emp.first_name} ${emp.last_name}`,
       photo: emp.photo ? `${baseUrl}${emp.photo}` : null,
-      education_qualifications: emp.education_qualifications 
-        ? JSON.parse(emp.education_qualifications) 
-        : []
+      education_qualifications: emp.education_qualifications
+        ? JSON.parse(emp.education_qualifications)
+        : [],
     }));
 
     res.json({ success: true, data: result });
   } catch (err) {
     console.error("GET /employees error:", err);
-    res.status(500).json({ success: false, message: "Failed to load employees" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to load employees" });
   }
 });
 
 // POST - Create Employee
 router.post("/", upload.single("photo"), async (req, res) => {
-  if (typeof req.body.education_qualifications === 'string') {
+  if (typeof req.body.education_qualifications === "string") {
     req.body.education_qualifications = req.body.education_qualifications
-      .split(',')
-      .map(item => item.trim())
-      .filter(item => item);
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item);
   }
 
   const { error } = employeeSchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
 
-  const { first_name, last_name, position, address, nic_number, contact_number, 
-         gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
+  const {
+    full_name,
+    first_name,
+    last_name,
+    position,
+    address,
+    nic_number,
+    contact_number,
+    gender,
+    marital_status,
+    birthday,
+    education_qualifications,
+    joined_at,
+  } = req.body;
 
   try {
-    const [last] = await pool.query("SELECT employee_number FROM employees ORDER BY id DESC LIMIT 1");
+    const [last] = await pool.query(
+      "SELECT employee_number FROM employees ORDER BY id DESC LIMIT 1",
+    );
     let nextNum = 10000;
     if (last.length > 0 && last[0].employee_number) {
-      const lastNum = parseInt(last[0].employee_number.replace('SDEMP-', ''));
+      const lastNum = parseInt(last[0].employee_number.replace("SDEMP-", ""));
       if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
 
     const employee_number = `SDEMP-${nextNum}`;
 
-    const photoPath = req.file ? `/uploads/employees/${req.file.filename}` : null;
+    const photoPath = req.file
+      ? `/uploads/employees/${req.file.filename}`
+      : null;
 
     const [result] = await pool.query(
       `INSERT INTO employees 
-       (employee_number, first_name, last_name, position, address, nic_number, contact_number, 
+       (employee_number, full_name, first_name, last_name, position, address, nic_number, contact_number, 
         gender, marital_status, birthday, joined_at, education_qualifications, photo, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [
         employee_number,
+        full_name.trim(),
         first_name.trim(),
         last_name.trim(),
         position.trim(),
@@ -199,16 +227,18 @@ router.post("/", upload.single("photo"), async (req, res) => {
         marital_status || null,
         birthday || null,
         joined_at || null,
-        education_qualifications && education_qualifications.length > 0 ? JSON.stringify(education_qualifications) : null,
-        photoPath
-      ]
+        education_qualifications && education_qualifications.length > 0
+          ? JSON.stringify(education_qualifications)
+          : null,
+        photoPath,
+      ],
     );
 
     res.status(201).json({
       success: true,
       message: "Employee added successfully",
       employee_number,
-      id: result.insertId
+      id: result.insertId,
     });
   } catch (err) {
     console.error(err);
@@ -218,30 +248,54 @@ router.post("/", upload.single("photo"), async (req, res) => {
 
 // PUT - Update Employee
 router.put("/:id", upload.single("photo"), async (req, res) => {
-  const [empCheck] = await pool.query("SELECT is_active FROM employees WHERE id = ?", [req.params.id]);
+  const [empCheck] = await pool.query(
+    "SELECT is_active FROM employees WHERE id = ?",
+    [req.params.id],
+  );
   if (empCheck.length === 0 || empCheck[0].is_active === 0) {
-    return res.status(403).json({ success: false, message: "Cannot edit inactive employee. Please reactivate first." });
+    return res
+      .status(403)
+      .json({
+        success: false,
+        message: "Cannot edit inactive employee. Please reactivate first.",
+      });
   }
 
-  if (typeof req.body.education_qualifications === 'string') {
+  if (typeof req.body.education_qualifications === "string") {
     req.body.education_qualifications = req.body.education_qualifications
-      .split(',')
-      .map(item => item.trim())
-      .filter(item => item);
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => item);
   }
 
   const { error } = employeeSchema.validate(req.body);
-  if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+  if (error)
+    return res
+      .status(400)
+      .json({ success: false, message: error.details[0].message });
 
-  const { first_name, last_name, position, address, nic_number, contact_number, 
-         gender, marital_status, birthday, education_qualifications, joined_at } = req.body;
+  const {
+    full_name,
+    first_name,
+    last_name,
+    position,
+    address,
+    nic_number,
+    contact_number,
+    gender,
+    marital_status,
+    birthday,
+    education_qualifications,
+    joined_at,
+  } = req.body;
   const photoPath = req.file ? `/uploads/employees/${req.file.filename}` : null;
 
   try {
-    let query = `UPDATE employees SET first_name=?, last_name=?, position=?, address=?, 
+    let query = `UPDATE employees SET full_name=?, first_name=?, last_name=?, position=?, address=?, 
                  nic_number=?, contact_number=?, gender=?, marital_status=?, 
                  birthday=?, joined_at=?, education_qualifications=?`;
     let params = [
+      full_name.trim(),
       first_name.trim(),
       last_name.trim(),
       position.trim(),
@@ -252,7 +306,9 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
       marital_status || null,
       birthday || null,
       joined_at || null,
-      education_qualifications && education_qualifications.length > 0 ? JSON.stringify(education_qualifications) : null
+      education_qualifications && education_qualifications.length > 0
+        ? JSON.stringify(education_qualifications)
+        : null,
     ];
 
     if (photoPath) {
@@ -266,13 +322,17 @@ router.put("/:id", upload.single("photo"), async (req, res) => {
     const [result] = await pool.query(query, params);
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
     res.json({ success: true, message: "Employee updated successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Failed to update employee" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to update employee" });
   }
 });
 
@@ -283,17 +343,24 @@ router.delete("/:id", async (req, res) => {
       `UPDATE employees 
        SET is_active = 0, deactivated_at = NOW(), reactivated_at = NULL 
        WHERE id = ?`,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
-    res.json({ success: true, message: "Employee has been deactivated successfully" });
+    res.json({
+      success: true,
+      message: "Employee has been deactivated successfully",
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Failed to deactivate employee" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to deactivate employee" });
   }
 });
 
@@ -304,17 +371,24 @@ router.put("/:id/reactivate", async (req, res) => {
       `UPDATE employees 
        SET is_active = 1, reactivated_at = NOW() 
        WHERE id = ?`,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Employee not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Employee not found" });
     }
 
-    res.json({ success: true, message: "Employee has been reactivated successfully" });
+    res.json({
+      success: true,
+      message: "Employee has been reactivated successfully",
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Failed to reactivate employee" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to reactivate employee" });
   }
 });
 

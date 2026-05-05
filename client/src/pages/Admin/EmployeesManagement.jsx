@@ -9,6 +9,7 @@ const EmployeesManagement = () => {
   const [employees, setEmployees] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
+    full_name: "",
     first_name: "",
     last_name: "",
     position: "",
@@ -56,13 +57,14 @@ const EmployeesManagement = () => {
       Swal.fire(
         "Not Allowed",
         "You can only edit active employees. Please reactivate first.",
-        "warning"
+        "warning",
       );
       return;
     }
 
     setEditing(emp);
     setForm({
+      full_name: emp.full_name || "",
       first_name: emp.first_name || "",
       last_name: emp.last_name || "",
       position: emp.position || "",
@@ -84,6 +86,7 @@ const EmployeesManagement = () => {
   const resetForm = () => {
     setEditing(null);
     setForm({
+      full_name: "",
       first_name: "",
       last_name: "",
       position: "",
@@ -105,6 +108,7 @@ const EmployeesManagement = () => {
     setSubmitLoading(true);
 
     const formData = new FormData();
+    formData.append("full_name", form.full_name);
     formData.append("first_name", form.first_name);
     formData.append("last_name", form.last_name);
     formData.append("position", form.position);
@@ -137,7 +141,9 @@ const EmployeesManagement = () => {
       Swal.fire({
         icon: "success",
         title: editing ? "Updated" : "Added",
-        text: editing ? "Employee updated successfully" : "Employee added successfully",
+        text: editing
+          ? "Employee updated successfully"
+          : "Employee added successfully",
         timer: 2000,
       });
 
@@ -163,8 +169,14 @@ const EmployeesManagement = () => {
     if (!confirmed.isConfirmed) return;
 
     try {
-      await protectedFetch(`${API_BASE}/api/employees/${id}`, { method: "DELETE" });
-      Swal.fire("Deactivated", "Employee has been deactivated successfully", "success");
+      await protectedFetch(`${API_BASE}/api/employees/${id}`, {
+        method: "DELETE",
+      });
+      Swal.fire(
+        "Deactivated",
+        "Employee has been deactivated successfully",
+        "success",
+      );
       loadEmployees();
     } catch (err) {
       Swal.fire("Error", "Failed to deactivate employee", "error");
@@ -184,8 +196,14 @@ const EmployeesManagement = () => {
     if (!confirmed.isConfirmed) return;
 
     try {
-      await protectedFetch(`${API_BASE}/api/employees/${id}/reactivate`, { method: "PUT" });
-      Swal.fire("Reactivated", "Employee has been reactivated successfully", "success");
+      await protectedFetch(`${API_BASE}/api/employees/${id}/reactivate`, {
+        method: "PUT",
+      });
+      Swal.fire(
+        "Reactivated",
+        "Employee has been reactivated successfully",
+        "success",
+      );
       loadEmployees();
     } catch (err) {
       Swal.fire("Error", "Failed to reactivate employee", "error");
@@ -202,7 +220,9 @@ const EmployeesManagement = () => {
 
   return (
     <div className="p-6 lg:p-10">
-      <h1 className="text-4xl font-bold mb-10 text-gray-900">Employee Management</h1>
+      <h1 className="text-4xl font-bold mb-10 text-gray-900">
+        Employee Management
+      </h1>
 
       {/* Form */}
       <div className="bg-white p-8 rounded-3xl shadow-xl mb-12">
@@ -210,29 +230,49 @@ const EmployeesManagement = () => {
           {editing ? "Edit Employee" : "Add New Employee"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              required
+              className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
+              placeholder="Full Name"
+            />
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              First Name
+            </label>
             <input
               value={form.first_name}
               onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-              required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Last Name
+            </label>
             <input
               value={form.last_name}
               onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-              required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Position *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Position *
+            </label>
             <input
               value={form.position}
               onChange={(e) => setForm({ ...form, position: e.target.value })}
@@ -242,7 +282,9 @@ const EmployeesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">NIC Number *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              NIC Number *
+            </label>
             <input
               value={form.nic_number}
               onChange={(e) => setForm({ ...form, nic_number: e.target.value })}
@@ -252,17 +294,23 @@ const EmployeesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Contact Number *
+            </label>
             <input
               value={form.contact_number}
-              onChange={(e) => setForm({ ...form, contact_number: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, contact_number: e.target.value })
+              }
               required
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender
+            </label>
             <select
               value={form.gender}
               onChange={(e) => setForm({ ...form, gender: e.target.value })}
@@ -276,10 +324,14 @@ const EmployeesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Marital Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Marital Status
+            </label>
             <select
               value={form.marital_status}
-              onChange={(e) => setForm({ ...form, marital_status: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, marital_status: e.target.value })
+              }
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
             >
               <option value="">Select Status</option>
@@ -291,7 +343,9 @@ const EmployeesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Birthday</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Birthday
+            </label>
             <input
               type="date"
               value={form.birthday}
@@ -301,7 +355,9 @@ const EmployeesManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Joined Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Joined Date
+            </label>
             <input
               type="date"
               value={form.joined_at}
@@ -311,7 +367,9 @@ const EmployeesManagement = () => {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Address
+            </label>
             <textarea
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
@@ -326,14 +384,18 @@ const EmployeesManagement = () => {
             </label>
             <input
               value={form.education_qualifications}
-              onChange={(e) => setForm({ ...form, education_qualifications: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, education_qualifications: e.target.value })
+              }
               className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-green-500"
               placeholder="BSc Engineering, Diploma in Solar Technology"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Professional Photo</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Professional Photo
+            </label>
             <input
               type="file"
               accept="image/*"
@@ -342,7 +404,11 @@ const EmployeesManagement = () => {
             />
             {photoPreview && (
               <div className="mt-4">
-                <img src={photoPreview} alt="Preview" className="w-32 h-32 object-cover rounded-xl shadow" />
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-xl shadow"
+                />
               </div>
             )}
           </div>
@@ -352,10 +418,16 @@ const EmployeesManagement = () => {
               type="submit"
               disabled={submitLoading}
               className={`flex-1 py-4 rounded-2xl font-semibold text-white transition ${
-                submitLoading ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                submitLoading
+                  ? "bg-green-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
               }`}
             >
-              {submitLoading ? "Saving..." : editing ? "Update Employee" : "Add Employee"}
+              {submitLoading
+                ? "Saving..."
+                : editing
+                  ? "Update Employee"
+                  : "Add Employee"}
             </button>
 
             {editing && (
@@ -372,24 +444,53 @@ const EmployeesManagement = () => {
       </div>
 
       {/* Employees Table */}
-      <h2 className="text-3xl font-bold mb-8">All Employees ({employees.length})</h2>
+      <h2 className="text-3xl font-bold mb-8">
+        All Employees ({employees.length})
+      </h2>
 
       <div className="overflow-x-auto bg-white rounded-3xl shadow-xl">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Photo</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Emp No</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">First Name</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Last Name</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Position</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Gender</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Marital Status</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Contact</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Birthday</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">QR Code</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Photo
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Emp No
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Full Name
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                First Name
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Last Name
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Position
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Gender
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Marital Status
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Contact
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Birthday
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Status
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                QR Code
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -397,23 +498,40 @@ const EmployeesManagement = () => {
               <tr key={emp.id} className="hover:bg-gray-50 transition">
                 <td className="px-6 py-4">
                   {emp.photo ? (
-                    <img src={emp.photo} alt={emp.full_name} className="w-12 h-12 object-cover rounded-full border" />
+                    <img
+                      src={emp.photo}
+                      alt={emp.full_name}
+                      className="w-12 h-12 object-cover rounded-full border"
+                    />
                   ) : (
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500">No Photo</div>
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xs text-gray-500">
+                      No Photo
+                    </div>
                   )}
                 </td>
-                <td className="px-6 py-4 font-medium text-gray-700">{emp.employee_number}</td>
-                <td className="px-6 py-4 font-semibold">{emp.first_name}</td>
-                <td className="px-6 py-4 font-semibold">{emp.last_name}</td>
+                <td className="px-6 py-4 font-medium text-gray-700">
+                  {emp.employee_number}
+                </td>
+                <td className="px-6 py-4 font-semibold">{emp.full_name}</td>
+                <td className="px-6 py-4">{emp.first_name}</td>
+                <td className="px-6 py-4">{emp.last_name}</td>
                 <td className="px-6 py-4 text-gray-600">{emp.position}</td>
                 <td className="px-6 py-4 text-gray-600">{emp.gender || "—"}</td>
-                <td className="px-6 py-4 text-gray-600">{emp.marital_status || "—"}</td>
-                <td className="px-6 py-4 text-gray-600">{emp.contact_number}</td>
                 <td className="px-6 py-4 text-gray-600">
-                  {emp.birthday ? new Date(emp.birthday).toLocaleDateString() : "—"}
+                  {emp.marital_status || "—"}
+                </td>
+                <td className="px-6 py-4 text-gray-600">
+                  {emp.contact_number}
+                </td>
+                <td className="px-6 py-4 text-gray-600">
+                  {emp.birthday
+                    ? new Date(emp.birthday).toLocaleDateString()
+                    : "—"}
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${emp.is_active === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${emp.is_active === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                  >
                     {emp.is_active === 1 ? "Active" : "Inactive"}
                   </span>
                 </td>
@@ -436,7 +554,7 @@ const EmployeesManagement = () => {
                         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(profileUrl)}&color=006400`;
                         const link = document.createElement("a");
                         link.href = qrUrl;
-                        link.download = `${emp.employee_number} - ${emp.first_name} ${emp.last_name}.png`;
+                        link.download = `${emp.employee_number} - ${emp.full_name}.png`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -450,11 +568,26 @@ const EmployeesManagement = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {emp.is_active === 1 ? (
                     <>
-                      <button onClick={() => handleEdit(emp)} className="text-blue-600 hover:text-blue-800 mr-4">Edit</button>
-                      <button onClick={() => handleDeactivate(emp.id)} className="text-red-600 hover:text-red-800">Deactivate</button>
+                      <button
+                        onClick={() => handleEdit(emp)}
+                        className="text-blue-600 hover:text-blue-800 mr-4"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeactivate(emp.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Deactivate
+                      </button>
                     </>
                   ) : (
-                    <button onClick={() => handleReactivate(emp.id)} className="text-emerald-600 hover:text-emerald-700 font-medium">Reactivate</button>
+                    <button
+                      onClick={() => handleReactivate(emp.id)}
+                      className="text-emerald-600 hover:text-emerald-700 font-medium"
+                    >
+                      Reactivate
+                    </button>
                   )}
                 </td>
               </tr>
